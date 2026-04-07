@@ -1,0 +1,21 @@
+# Build artifacts
+firmware/build/
+firmware/build-test/
+__pycache__/
+*.pyc
+*.o
+*.d
+*.elf
+*.bin
+*.map
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+
+# macOS
+.DS_Store
+
+# Secrets
+.env
