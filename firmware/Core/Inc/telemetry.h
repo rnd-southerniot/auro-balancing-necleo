@@ -25,6 +25,7 @@ typedef struct {
     uint8_t tx_buf[64];
     volatile uint8_t tx_busy;
     uint8_t pose_divider;   /* sends pose every 5th call = 10 Hz */
+    uint8_t imu_divider;    /* sends IMU every 2nd call = 25 Hz  */
 } Telemetry_t;
 
 void Telemetry_Init(Telemetry_t *telem, UART_HandleTypeDef *huart);

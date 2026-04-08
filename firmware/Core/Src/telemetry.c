@@ -70,8 +70,11 @@ void Telemetry_BuildAndSend(Telemetry_t *telem)
 
     uint16_t frame_len;
 
-    /* Every 5th call (10 Hz), send pose instead of telem_fast */
+    /* Every 5th call (10 Hz), send pose instead of telem_fast.
+     * Every 2nd call (25 Hz), send IMU instead of telem_fast (when not pose). */
     telem->pose_divider++;
+    telem->imu_divider++;
+
     if (telem->pose_divider >= 5U) {
         telem->pose_divider = 0U;
 
@@ -86,6 +89,25 @@ void Telemetry_BuildAndSend(Telemetry_t *telem)
         frame_len = Comm_EncodeFrame(telem->tx_buf, MSG_TELEM_POSE,
                                      (const uint8_t *)&pose,
                                      PAYLOAD_LEN_TELEM_POSE);
+    } else if (telem->imu_divider >= 2U && g_imu.initialized) {
+        telem->imu_divider = 0U;
+
+        PayloadTelemImu_t imu_pkt;
+        imu_pkt.timestamp_ms   = telem->timestamp_ms;
+        imu_pkt.pitch_deg      = g_imu.pitch_deg;
+        imu_pkt.pitch_rate_dps = g_imu.pitch_rate_dps;
+        imu_pkt.accel_x_g      = g_imu.accel_g[0];
+        imu_pkt.accel_y_g      = g_imu.accel_g[1];
+        imu_pkt.accel_z_g      = g_imu.accel_g[2];
+        imu_pkt.gyro_x_dps     = g_imu.gyro_dps[0];
+        imu_pkt.gyro_y_dps     = g_imu.gyro_dps[1];
+        imu_pkt.gyro_z_dps     = g_imu.gyro_dps[2];
+        imu_pkt.temp_c         = g_imu.temp_c;
+        imu_pkt.imu_status     = (uint8_t)(g_imu.initialized ? 0U : 1U);
+
+        frame_len = Comm_EncodeFrame(telem->tx_buf, MSG_TELEM_IMU,
+                                     (const uint8_t *)&imu_pkt,
+                                     PAYLOAD_LEN_TELEM_IMU);
     } else {
         frame_len = Comm_EncodeFrame(telem->tx_buf, MSG_TELEM_FAST,
                                      (const uint8_t *)&fast,

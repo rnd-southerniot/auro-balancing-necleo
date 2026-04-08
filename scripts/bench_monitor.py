@@ -52,6 +52,7 @@ BAUD = 921600
 
 # Message types
 MSG_TELEM_FAST = 0x10
+MSG_TELEM_IMU = 0x11
 MSG_TELEM_POSE = 0x12
 MSG_CMD_RPM = 0x20
 MSG_CMD_POSITION = 0x21
@@ -66,6 +67,7 @@ MSG_RESP_NACK = 0x31
 # Payload sizes
 PAYLOAD_SIZES = {
     MSG_TELEM_FAST: 44,
+    MSG_TELEM_IMU: 41,
     MSG_TELEM_POSE: 24,
     MSG_CMD_RPM: 4,
     MSG_CMD_POSITION: 4,
@@ -109,7 +111,7 @@ def encode_frame(msg_type: int, payload: bytes = b"") -> bytes:
 def decode_telem_fast(payload: bytes) -> dict:
     if len(payload) != 44:
         return {"error": f"bad length {len(payload)}"}
-    fields = struct.unpack("<IffffffffffffffBBBB", payload)
+    fields = struct.unpack("<IfffffffffBBBB", payload)
     return {
         "ts_ms": fields[0],
         "m1_rpm": fields[1],
@@ -125,6 +127,25 @@ def decode_telem_fast(payload: bytes) -> dict:
         "m2_fault": fields[11],
         "m1_mode": fields[12],
         "m2_mode": fields[13],
+    }
+
+
+def decode_telem_imu(payload: bytes) -> dict:
+    if len(payload) != 41:
+        return {"error": f"bad length {len(payload)}"}
+    fields = struct.unpack("<IfffffffffB", payload)
+    return {
+        "ts_ms": fields[0],
+        "pitch_deg": fields[1],
+        "pitch_rate_dps": fields[2],
+        "accel_x_g": fields[3],
+        "accel_y_g": fields[4],
+        "accel_z_g": fields[5],
+        "gyro_x_dps": fields[6],
+        "gyro_y_dps": fields[7],
+        "gyro_z_dps": fields[8],
+        "temp_c": fields[9],
+        "imu_status": fields[10],
     }
 
 
@@ -294,6 +315,16 @@ def monitor(port: str):
                         f"{t['m1_cur_mA']:8.1f}  {t['m2_cur_mA']:8.1f}  "
                         f"{m1m:>6s}  {m2m:>6s}  "
                         f"{'OK' if faults == 0 else f'0x{faults:02X}':>6s}"
+                    )
+
+                elif msg_type == MSG_TELEM_IMU:
+                    m = decode_telem_imu(payload)
+                    print(
+                        f"  IMU   pitch={m['pitch_deg']:7.2f}deg  "
+                        f"rate={m['pitch_rate_dps']:7.2f}dps  "
+                        f"ax={m['accel_x_g']:6.3f}g  "
+                        f"az={m['accel_z_g']:6.3f}g  "
+                        f"T={m['temp_c']:.1f}C"
                     )
 
                 elif msg_type == MSG_TELEM_POSE:

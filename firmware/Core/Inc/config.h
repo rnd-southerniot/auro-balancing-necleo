@@ -102,6 +102,12 @@ extern "C" {
 /* ── Stack Canary ──────────────────────────────────────────── */
 #define STACK_CANARY_WORD         0xDEADBEEFU
 
+/* ── IMU — MPU6050 on I2C1 (PB8=SCL, PB9=SDA) ────────────── */
+/* PB8  = I2C1_SCL AF4              CN10-3  */
+/* PB9  = I2C1_SDA AF4              CN10-5  */
+#define IMU_I2C_SPEED_HZ          400000U
+#define IMU_GYRO_CAL_SAMPLES      200U
+
 /* ── Pin Assignments — Motor A (Nucleo-F401RE) ────────────── */
 /* Encoder: TIM2, 32-bit, AF1 */
 /* PA0  = TIM2_CH1 = ENC_A          CN7-28  */

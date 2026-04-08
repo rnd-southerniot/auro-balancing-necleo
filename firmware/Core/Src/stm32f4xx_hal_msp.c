@@ -95,6 +95,30 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc)
     }
 }
 
+/* ── I2C MSP ──────────────────────────────────────────────── */
+
+void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1) {
+        __HAL_RCC_I2C1_CLK_ENABLE();
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+
+        /* PB8 = I2C1_SCL, PB9 = I2C1_SDA, AF4, open-drain with pull-up */
+        GPIO_InitTypeDef gpio = {0};
+        gpio.Pin       = GPIO_PIN_8 | GPIO_PIN_9;
+        gpio.Mode      = GPIO_MODE_AF_OD;
+        gpio.Pull      = GPIO_PULLUP;
+        gpio.Speed     = GPIO_SPEED_FREQ_HIGH;
+        gpio.Alternate = GPIO_AF4_I2C1;
+        HAL_GPIO_Init(GPIOB, &gpio);
+
+        HAL_NVIC_SetPriority(I2C1_EV_IRQn, 1, 0);
+        HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
+        HAL_NVIC_SetPriority(I2C1_ER_IRQn, 1, 0);
+        HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
+    }
+}
+
 /* ── TIM Encoder MSP ───────────────────────────────────────── */
 
 void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef *htim)

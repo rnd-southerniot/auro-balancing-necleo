@@ -57,6 +57,10 @@ ADC_HandleTypeDef      hadc1;          /* Motor A current + battery + Motor B cu
 DMA_HandleTypeDef      hdma_adc1;
 DMA_HandleTypeDef      hdma_usart2_tx;
 IWDG_HandleTypeDef     hiwdg;
+I2C_HandleTypeDef      hi2c1;          /* MPU6050 IMU (PB8/PB9)        */
+
+/* ── IMU state ─────────────────────────────────────────────── */
+IMU_t                  g_imu;
 
 /* ── ADC DMA buffers ───────────────────────────────────────── */
 volatile uint16_t      g_adc_dma_buf[ADC_NUM_CHANNELS];
@@ -87,7 +91,8 @@ static void MX_TIM10_Init(void);
 static void MX_TIM11_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
-static void MX_IWDG_Init(void);
+static void MX_I2C1_Init(void);
+/* static void MX_IWDG_Init(void); — disabled during bench debug */
 
 static void App_InitModules(void);
 static void App_ProcessCommand(void);
@@ -131,7 +136,8 @@ int main(void)
     MX_TIM11_Init();
     MX_USART2_UART_Init();
     MX_ADC1_Init();
-    MX_IWDG_Init();
+    MX_I2C1_Init();
+    /* MX_IWDG_Init(); — disabled during bench debug: IWDG reset loop */
 
     App_InitModules();
 
@@ -254,6 +260,12 @@ static void App_InitModules(void)
     /* Telemetry */
     Telemetry_Init(&g_telem, &huart2);
 
+    /* IMU — MPU6050 on I2C1 (PB8/PB9). Gracefully skipped if not present. */
+    if (IMU_Init(&g_imu, &hi2c1) == IMU_OK) {
+        HAL_Delay(50);
+        IMU_CalibrateGyro(&g_imu, 200);
+    }
+
     /* Comm RX state machine */
     Comm_RxInit(&g_comm_rx);
 
@@ -277,6 +289,12 @@ static void App_ControlTick(void)
 
     /* 1. Encoder update */
     Encoder_Update(&g_enc_a);
+
+    /* 1b. IMU read + complementary filter update */
+    if (g_imu.initialized) {
+        IMU_ReadAll(&g_imu);
+        IMU_UpdateAngle(&g_imu, PID_DT_S);
+    }
 
     /* 2. ADC readings */
     float current_ma = ADC_RawToCurrentMa((uint16_t)g_adc_dma_buf[0]);
@@ -963,6 +981,22 @@ static void MX_ADC1_Init(void)
     HAL_ADC_ConfigChannel(&hadc1, &ch);
 }
 
+static void MX_I2C1_Init(void)
+{
+    /* I2C1: 400 kHz Fast Mode for MPU6050. GPIO/NVIC in HAL_I2C_MspInit. */
+    hi2c1.Instance              = I2C1;
+    hi2c1.Init.ClockSpeed       = 400000U;
+    hi2c1.Init.DutyCycle        = I2C_DUTYCYCLE_2;
+    hi2c1.Init.OwnAddress1      = 0U;
+    hi2c1.Init.AddressingMode   = I2C_ADDRESSINGMODE_7BIT;
+    hi2c1.Init.DualAddressMode  = I2C_DUALADDRESS_DISABLE;
+    hi2c1.Init.OwnAddress2      = 0U;
+    hi2c1.Init.GeneralCallMode  = I2C_GENERALCALL_DISABLE;
+    hi2c1.Init.NoStretchMode    = I2C_NOSTRETCH_DISABLE;
+
+    HAL_I2C_Init(&hi2c1);
+}
+
 static void MX_TIM3_Init(void)
 {
     /* TIM3: encoder for Motor B (16-bit). GPIO in HAL_TIM_Encoder_MspInit. */
@@ -1016,6 +1050,7 @@ static void MX_TIM4_Init(void)
     HAL_TIM_PWM_ConfigChannel(&htim4, &oc, TIM_CHANNEL_2);
 }
 
+/* MX_IWDG_Init — disabled during bench debug: IWDG reset loop
 static void MX_IWDG_Init(void)
 {
     hiwdg.Instance       = IWDG;
@@ -1024,6 +1059,7 @@ static void MX_IWDG_Init(void)
 
     HAL_IWDG_Init(&hiwdg);
 }
+*/
 
 /* ================================================================
  * Error handler

@@ -20,6 +20,7 @@ extern "C" {
 #include "telemetry.h"
 #include "autotune.h"
 #include "odometry.h"
+#include "imu_mpu6050.h"
 
 /* ── Motor A state ─────────────────────────────────────────── */
 extern Autotune_t            g_autotune_a;
@@ -58,6 +59,10 @@ extern ADC_HandleTypeDef     hadc1;   /* CT_A + battery + CT_B        */
 extern DMA_HandleTypeDef     hdma_adc1;
 extern DMA_HandleTypeDef     hdma_usart2_tx;
 extern IWDG_HandleTypeDef    hiwdg;
+extern I2C_HandleTypeDef     hi2c1;   /* MPU6050 IMU (PB8/PB9)        */
+
+/* ── IMU state ─────────────────────────────────────────────── */
+extern IMU_t                 g_imu;
 
 /* ── ADC DMA buffers ───────────────────────────────────────── */
 #define ADC_NUM_CHANNELS     3U      /* CT_A (PC3), batt (PB1), CT_B (PC4) */

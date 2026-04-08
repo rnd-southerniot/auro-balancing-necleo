@@ -84,6 +84,8 @@ else()
         ${HAL_DIR}/Src/stm32f4xx_hal_tim.c
         ${HAL_DIR}/Src/stm32f4xx_hal_tim_ex.c
         ${HAL_DIR}/Src/stm32f4xx_hal_uart.c
+        ${HAL_DIR}/Src/stm32f4xx_hal_i2c.c
+        ${HAL_DIR}/Src/stm32f4xx_hal_i2c_ex.c
     )
 
     # CMSIS system init

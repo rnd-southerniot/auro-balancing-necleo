@@ -23,6 +23,7 @@ extern "C" {
 
 /* ── Message type codes ────────────────────────────────────── */
 #define MSG_TELEM_FAST           0x10U  /* STM32 -> host, 50 Hz       */
+#define MSG_TELEM_IMU            0x11U  /* STM32 -> host, 50 Hz       */
 #define MSG_TELEM_POSE           0x12U  /* STM32 -> host, 10 Hz       */
 #define MSG_CMD_RPM              0x20U  /* host -> STM32               */
 #define MSG_CMD_POSITION         0x21U  /* host -> STM32               */
@@ -92,6 +93,20 @@ typedef struct {
 } PayloadTelemFast_t;           /* 44 bytes */
 
 typedef struct {
+    uint32_t timestamp_ms;      /*  4 */
+    float    pitch_deg;         /*  4  complementary filter output */
+    float    pitch_rate_dps;    /*  4  gyro rate on pitch axis */
+    float    accel_x_g;         /*  4 */
+    float    accel_y_g;         /*  4 */
+    float    accel_z_g;         /*  4 */
+    float    gyro_x_dps;        /*  4 */
+    float    gyro_y_dps;        /*  4 */
+    float    gyro_z_dps;        /*  4 */
+    float    temp_c;            /*  4 */
+    uint8_t  imu_status;        /*  1  IMU_Status_t */
+} PayloadTelemImu_t;            /* 41 bytes */
+
+typedef struct {
     float setpoint_rpm;
 } PayloadCmdRpm_t;            /* 4 bytes */
 
@@ -153,6 +168,8 @@ typedef struct {
 /* ── Compile-time payload size verification ────────────────── */
 _Static_assert(sizeof(PayloadTelemFast_t) == 44,
                "TELEM_FAST payload must be 44 bytes");
+_Static_assert(sizeof(PayloadTelemImu_t) == 41,
+               "TELEM_IMU payload must be 41 bytes");
 _Static_assert(sizeof(PayloadCmdRpm_t) == 4,
                "CMD_RPM payload must be 4 bytes");
 _Static_assert(sizeof(PayloadCmdPosition_t) == 4,
@@ -168,6 +185,7 @@ _Static_assert(sizeof(PayloadRespNack_t) == 2,
 
 /* ── Payload length constants ──────────────────────────────── */
 #define PAYLOAD_LEN_TELEM_FAST          44U
+#define PAYLOAD_LEN_TELEM_IMU           41U
 #define PAYLOAD_LEN_TELEM_POSE          24U
 #define PAYLOAD_LEN_CMD_RPM              4U
 #define PAYLOAD_LEN_CMD_POSITION         4U

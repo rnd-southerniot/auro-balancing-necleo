@@ -136,6 +136,7 @@ uint8_t Comm_GetPayloadLength(uint8_t msg_type)
 {
     switch (msg_type) {
     case MSG_TELEM_FAST:         return PAYLOAD_LEN_TELEM_FAST;
+    case MSG_TELEM_IMU:          return PAYLOAD_LEN_TELEM_IMU;
     case MSG_TELEM_POSE:         return PAYLOAD_LEN_TELEM_POSE;
     case MSG_CMD_RPM:            return PAYLOAD_LEN_CMD_RPM;
     case MSG_CMD_POSITION:       return PAYLOAD_LEN_CMD_POSITION;
