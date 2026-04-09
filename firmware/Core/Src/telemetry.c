@@ -45,7 +45,7 @@ void Telemetry_BuildAndSend(Telemetry_t *telem)
         telem->m2_current_ma = v_corr_b / CT_MV_PER_AMP * 1000.0f;
     }
     telem->m2_pid_output   = (float)g_applied_duty_b;
-    telem->m2_fault_flags  = 0U;  /* TODO: per-motor safety in Phase 9 */
+    telem->m2_fault_flags  = g_imu_init_err;  /* DEBUG: IMU init error code */
     telem->m2_mode         = (uint8_t)g_mode_b;
 
     telem->batt_voltage    = (float)g_adc_dma_buf[1] * BATT_ADC_VREF * BATT_V_SCALE
@@ -103,7 +103,8 @@ void Telemetry_BuildAndSend(Telemetry_t *telem)
         imu_pkt.gyro_y_dps     = g_imu.gyro_dps[1];
         imu_pkt.gyro_z_dps     = g_imu.gyro_dps[2];
         imu_pkt.temp_c         = g_imu.temp_c;
-        imu_pkt.imu_status     = (uint8_t)(g_imu.initialized ? 0U : 1U);
+        imu_pkt.imu_status     = (uint8_t)((g_imu.initialized ? 0x01U : 0x00U)
+                                           | (g_imu.gyro_cal_done ? 0x02U : 0x00U));
 
         frame_len = Comm_EncodeFrame(telem->tx_buf, MSG_TELEM_IMU,
                                      (const uint8_t *)&imu_pkt,

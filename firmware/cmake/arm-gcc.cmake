@@ -9,15 +9,16 @@ find_program(_CUBE_GCC arm-none-eabi-gcc
 )
 if(_CUBE_GCC)
     get_filename_component(_TC_BIN "${_CUBE_GCC}" DIRECTORY)
+    set(_TC_PREFIX "${_TC_BIN}/")
 else()
-    set(_TC_BIN "")  # Fall back to PATH
+    set(_TC_PREFIX "")  # Fall back to PATH
 endif()
 
-set(CMAKE_C_COMPILER   ${_TC_BIN}/arm-none-eabi-gcc)
-set(CMAKE_ASM_COMPILER ${_TC_BIN}/arm-none-eabi-gcc)
-set(CMAKE_OBJCOPY      ${_TC_BIN}/arm-none-eabi-objcopy)
-set(CMAKE_OBJDUMP      ${_TC_BIN}/arm-none-eabi-objdump)
-set(CMAKE_SIZE         ${_TC_BIN}/arm-none-eabi-size)
+set(CMAKE_C_COMPILER   ${_TC_PREFIX}arm-none-eabi-gcc)
+set(CMAKE_ASM_COMPILER ${_TC_PREFIX}arm-none-eabi-gcc)
+set(CMAKE_OBJCOPY      ${_TC_PREFIX}arm-none-eabi-objcopy)
+set(CMAKE_OBJDUMP      ${_TC_PREFIX}arm-none-eabi-objdump)
+set(CMAKE_SIZE         ${_TC_PREFIX}arm-none-eabi-size)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 

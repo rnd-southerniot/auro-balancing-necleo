@@ -13,6 +13,7 @@
 | Phase | Gate | Result | Notes |
 |-------|------|--------|-------|
 | 1 VCP | USB enumerates + LD1 green + telemetry frames on VCP | PASS | 346 frames, 0 CRC errors |
+| 2 IMU | MPU6050/ICM-20602 accel ~1g, gyro drift <1dps, comp. filter tracks | PASS | WHO_AM_I=0x72 (ICM-20602), ~21 Hz IMU frames |
 | 3 Encoders | Both encoders count bidirectionally, net drift < 50 counts | PASS (A only) | Motor B not wired yet |
 | 4 ADC | Battery within 5% of known voltage, current channels near 0 | PASS | 11.87V reported vs 11.9V measured (0.25%) |
 | 5 PWM | 20kHz on PA8, PA9, PB6, PB7 | PASS (A only) | Verified via motor spin, no scope |
@@ -21,7 +22,6 @@
 
 **Phases not yet tested:**
 
-- Phase 2 (IMU) — I2C/MPU6050 driver in firmware, MPU6050 not wired
 - Phase 8 (Balance) — no balancing algorithm, this is a PID motor controller
 - Phase 9 (Jitter histogram) — not instrumented
 - Motor B — H-bridge not wired yet
@@ -58,6 +58,65 @@ Use `bench_monitor.py` to decode.
 - [x] PASS: heartbeat LED (PA5/LD2) toggles at ~1Hz
 
 **Gate 1 result:** PASS
+
+---
+
+## Phase 2 — IMU Verification
+
+### Step 2.1 — WHO_AM_I check
+
+```text
+Module label: GY-521 (MPU6050 breakout)
+Actual chip: ICM-20602 (WHO_AM_I = 0x72, not 0x68)
+I2C1 bus: PB8 (SCL), PB9 (SDA), 400 kHz
+Fix: added 0x72 to accepted WHO_AM_I values in imu_mpu6050.c
+```
+
+- [x] PASS: device responds on I2C1, init succeeds after WHO_AM_I fix
+
+### Step 2.2 — Accel sanity check (board stationary)
+
+```text
+accel_x_g:  0.098 g
+accel_y_g:  0.529 g
+accel_z_g: -0.850 g
+magnitude:  1.006 g (expect ~1.0)
+```
+
+- [x] PASS: accel magnitude ~1g
+
+### Step 2.3 — Complementary filter pitch
+
+```text
+pitch_deg:    173.4 deg (board mounted tilted/inverted)
+pitch_rate:   ~0.0 dps when stationary
+```
+
+- [x] PASS: pitch stable, rate near zero at rest
+
+### Step 2.4 — Gyro calibration check
+
+```text
+gyro_x_dps: -0.98 (expect <2)
+gyro_y_dps:  0.06 (expect <2)
+gyro_z_dps:  0.31 (expect <2)
+Calibration: 200 samples at boot, offsets applied
+```
+
+- [x] PASS: gyro drift < 1 dps on all axes
+
+### Step 2.5 — Temperature and status
+
+```text
+temp_c:      45.9 C (in range 10–60 C)
+imu_status:  0x03 (initialized + gyro calibrated)
+IMU frames:  107 in 5 sec (~21 Hz, expect ~25 Hz)
+CRC errors:  0
+```
+
+- [x] PASS: temperature in range, status flags correct
+
+**Gate 2 result:** PASS
 
 ---
 
@@ -269,6 +328,7 @@ Measured ISR period: ___________ms (expect 1.000 ± 0.005)
 
 - Motor A CW → encoder count: increase (positive RPM)
 - Motor B CW → encoder count: not yet tested
+- IMU module: GY-521 labelled MPU6050, actual chip ICM-20602 (WHO_AM_I=0x72)
 - Level shift method: not yet confirmed (TODO: measure divider output)
 - Motor PSU: 11.9V
 - Flash method: drag-drop to /Volumes/STLINKV2-1/ (STM32_Programmer_CLI had USB comm errors)
@@ -276,4 +336,4 @@ Measured ISR period: ___________ms (expect 1.000 ± 0.005)
 
 ---
 
-*auro-balancing-necleo · HW-LIVE-01 · Phases 1,3,4,5,6,7 testable*
+*auro-balancing-necleo · HW-LIVE-01 · Phases 1,2,3,4,5,6,7 testable*

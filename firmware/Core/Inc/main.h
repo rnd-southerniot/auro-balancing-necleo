@@ -63,6 +63,7 @@ extern I2C_HandleTypeDef     hi2c1;   /* MPU6050 IMU (PB8/PB9)        */
 
 /* ── IMU state ─────────────────────────────────────────────── */
 extern IMU_t                 g_imu;
+extern volatile uint8_t      g_imu_init_err;
 
 /* ── ADC DMA buffers ───────────────────────────────────────── */
 #define ADC_NUM_CHANNELS     3U      /* CT_A (PC3), batt (PB1), CT_B (PC4) */

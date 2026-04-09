@@ -107,7 +107,10 @@ IMU_Status_t IMU_Init(IMU_t *imu, I2C_HandleTypeDef *hi2c)
     if (MPU_ReadReg(hi2c, MPU6050_REG_WHO_AM_I, &who, 1) != HAL_OK) {
         return IMU_ERR_I2C;
     }
-    if (who != MPU6050_WHO_AM_I_VAL) {
+    if (who != MPU6050_WHO_AM_I_VAL &&
+        who != ICM20602_WHO_AM_I_VAL &&
+        who != ICM20602_WHO_AM_I_ALT &&
+        who != MPU6500_WHO_AM_I_VAL) {
         return IMU_ERR_WHO_AM_I;
     }
 
