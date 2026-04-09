@@ -118,6 +118,33 @@ CRC errors:  0
 
 **Gate 2 result:** PASS
 
+### Step 2.6 — MPU9250/6500 module comparison
+
+Second module tested: MPU9250/6500 (WHO_AM_I = 0x71 expected, accepted 0x70–0x73).
+
+```text
+Accel mag:      1.039g (stdev 0.003)
+Gyro bias:      X=+0.87  Y=+1.20  Z=-0.77 dps (stdev 0.05–0.07)
+Pitch range:    0.09 deg over 5s (stdev 0.019)
+Temp:           44.6 C
+Calibration:    500 samples, 500ms thermal settle
+```
+
+| Metric | ICM-20602 (0x72) | MPU9250/6500 |
+|--------|-----------------|--------------|
+| Gyro bias (max axis) | 0.98 dps | 1.20 dps |
+| Gyro stdev | 0.06 dps | 0.07 dps |
+| Accel stdev | 0.003g | 0.003g |
+| Pitch stdev | 0.020 deg | 0.019 deg |
+| Pitch range (5s) | 0.09 deg | 0.09 deg |
+
+Both modules pass. ICM-20602 has lower gyro bias — recommended for final build.
+Complementary filter suppresses gyro bias in both cases (pitch drift negligible).
+
+- [x] PASS: MPU9250/6500 module verified
+
+**Gate 2 result:** PASS (both modules)
+
 ---
 
 ## Phase 3 — Encoder Verification (No Motor Power)
@@ -328,7 +355,8 @@ Measured ISR period: ___________ms (expect 1.000 ± 0.005)
 
 - Motor A CW → encoder count: increase (positive RPM)
 - Motor B CW → encoder count: not yet tested
-- IMU module: GY-521 labelled MPU6050, actual chip ICM-20602 (WHO_AM_I=0x72)
+- IMU module A: GY-521 labelled MPU6050, actual chip ICM-20602 (WHO_AM_I=0x72) — recommended
+- IMU module B: MPU9250/6500 — higher gyro bias but pitch output equivalent
 - Level shift method: not yet confirmed (TODO: measure divider output)
 - Motor PSU: 11.9V
 - Flash method: drag-drop to /Volumes/STLINKV2-1/ (STM32_Programmer_CLI had USB comm errors)
