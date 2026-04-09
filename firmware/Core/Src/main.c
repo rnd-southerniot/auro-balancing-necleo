@@ -61,6 +61,7 @@ I2C_HandleTypeDef      hi2c1;          /* MPU6050 IMU (PB8/PB9)        */
 
 /* ── IMU state ─────────────────────────────────────────────── */
 IMU_t                  g_imu;
+volatile uint8_t       g_imu_init_err;   /* debug: IMU_Init return code */
 
 /* ── ADC DMA buffers ───────────────────────────────────────── */
 volatile uint16_t      g_adc_dma_buf[ADC_NUM_CHANNELS];
@@ -261,9 +262,10 @@ static void App_InitModules(void)
     Telemetry_Init(&g_telem, &huart2);
 
     /* IMU — MPU6050 on I2C1 (PB8/PB9). Gracefully skipped if not present. */
-    if (IMU_Init(&g_imu, &hi2c1) == IMU_OK) {
+    g_imu_init_err = (uint8_t)IMU_Init(&g_imu, &hi2c1);
+    if (g_imu_init_err == IMU_OK) {
         HAL_Delay(50);
-        IMU_CalibrateGyro(&g_imu, 200);
+        g_imu_init_err = (uint8_t)IMU_CalibrateGyro(&g_imu, 200);
     }
 
     /* Comm RX state machine */
