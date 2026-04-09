@@ -32,6 +32,8 @@ extern "C" {
 #define ICM20602_WHO_AM_I_VAL   0x12U
 #define ICM20602_WHO_AM_I_ALT   0x72U   /* some ICM-20602 batches */
 #define MPU6500_WHO_AM_I_VAL    0x70U
+#define MPU9250_WHO_AM_I_VAL    0x71U
+#define MPU9255_WHO_AM_I_VAL    0x73U
 
 /* ── Gyro/Accel scale factors ─────────────────────────────── */
 /* FS_SEL=0 → ±250 deg/s  → 131 LSB/deg/s */

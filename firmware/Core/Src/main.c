@@ -264,8 +264,8 @@ static void App_InitModules(void)
     /* IMU — MPU6050 on I2C1 (PB8/PB9). Gracefully skipped if not present. */
     g_imu_init_err = (uint8_t)IMU_Init(&g_imu, &hi2c1);
     if (g_imu_init_err == IMU_OK) {
-        HAL_Delay(50);
-        g_imu_init_err = (uint8_t)IMU_CalibrateGyro(&g_imu, 200);
+        HAL_Delay(500);   /* thermal settle before gyro calibration */
+        g_imu_init_err = (uint8_t)IMU_CalibrateGyro(&g_imu, 500);
     }
 
     /* Comm RX state machine */
