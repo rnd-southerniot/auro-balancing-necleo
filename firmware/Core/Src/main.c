@@ -65,6 +65,8 @@ volatile uint8_t       g_imu_init_err;   /* debug: IMU_Init return code */
 
 /* ── ADC DMA buffers ───────────────────────────────────────── */
 volatile uint16_t      g_adc_dma_buf[ADC_NUM_CHANNELS];
+volatile uint16_t      g_ct_a_peak;    /* Peak-held CT_A raw ADC value */
+volatile uint16_t      g_ct_b_peak;    /* Peak-held CT_B raw ADC value */
 
 /* ── UART single-byte receive buffer ───────────────────────── */
 volatile uint8_t       g_uart_rx_byte;
@@ -308,8 +310,33 @@ static void App_ControlTick(void)
         }
     }
 
-    /* 2. ADC readings */
-    float current_ma = ADC_RawToCurrentMa((uint16_t)g_adc_dma_buf[0]);
+    /* 2. ADC readings.
+     * CT sense is pulsed — DBH-12V only outputs during PWM ON phase.
+     * Track peak over 20 ticks (20ms), then latch to g_ct_x_peak.
+     * The latch holds the previous window's peak until a new one is ready,
+     * so telemetry always reads a valid (non-zero) value when motor runs. */
+    {
+        static uint16_t ct_a_acc = 0U;
+        static uint16_t ct_b_acc = 0U;
+        static uint8_t  ct_div = 0U;
+
+        /* CT wires swapped on H-bridge: Motor A CT → PC4 (buf[2]),
+         * Motor B CT → PC3 (buf[0]). Swap in firmware. */
+        uint16_t raw_a = (uint16_t)g_adc_dma_buf[2];
+        uint16_t raw_b = (uint16_t)g_adc_dma_buf[0];
+        if (raw_a > ct_a_acc) ct_a_acc = raw_a;
+        if (raw_b > ct_b_acc) ct_b_acc = raw_b;
+
+        ct_div++;
+        if (ct_div >= 20U) {
+            ct_div = 0U;
+            g_ct_a_peak = ct_a_acc;
+            g_ct_b_peak = ct_b_acc;
+            ct_a_acc = 0U;
+            ct_b_acc = 0U;
+        }
+    }
+    float current_ma = ADC_RawToCurrentMa(g_ct_a_peak);
     float batt_v     = ADC_RawToBattV((uint16_t)g_adc_dma_buf[1]);
 
     float rpm     = Encoder_GetRPM(&g_enc_a);
@@ -448,7 +475,7 @@ motor_b_tick:
     Encoder_Update(&g_enc_b);
     float rpm_b = Encoder_GetRPM(&g_enc_b);
     float pos_b = Encoder_GetPositionDeg(&g_enc_b);
-    float cur_b = ADC_RawToCurrentMa((uint16_t)g_adc_dma_buf[2]);
+    float cur_b = ADC_RawToCurrentMa(g_ct_b_peak);
     (void)cur_b;  /* TODO: per-motor safety in Phase 9 */
 
     float duty_b = 0.0f;
