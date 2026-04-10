@@ -68,6 +68,8 @@ extern volatile uint8_t      g_imu_init_err;
 /* ── ADC DMA buffers ───────────────────────────────────────── */
 #define ADC_NUM_CHANNELS     3U      /* CT_A (PC3), batt (PB1), CT_B (PC4) */
 extern volatile uint16_t    g_adc_dma_buf[ADC_NUM_CHANNELS];
+extern volatile uint16_t    g_ct_a_peak;    /* Peak-held CT_A over 20ms */
+extern volatile uint16_t    g_ct_b_peak;    /* Peak-held CT_B over 20ms */
 
 /* ── UART single-byte RX buffer ────────────────────────────── */
 extern volatile uint8_t     g_uart_rx_byte;

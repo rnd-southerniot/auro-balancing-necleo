@@ -189,7 +189,9 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM10) {
         __HAL_RCC_TIM10_CLK_ENABLE();
-        HAL_NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 0, 0);
+        /* Priority 1: lower than USART2 (priority 0) so UART RX can
+         * preempt during blocking I2C reads inside the control ISR. */
+        HAL_NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 1, 0);
         HAL_NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
     } else if (htim->Instance == TIM11) {
         __HAL_RCC_TIM11_CLK_ENABLE();

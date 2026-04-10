@@ -26,7 +26,7 @@ void Telemetry_BuildAndSend(Telemetry_t *telem)
     telem->m1_rpm          = Encoder_GetRPM(&g_enc_a);
     telem->m1_position_deg = Encoder_GetPositionDeg(&g_enc_a);
     {
-        float v_mv = (float)g_adc_dma_buf[0] * (BATT_ADC_VREF * 1000.0f) / BATT_ADC_FULL_SCALE;
+        float v_mv = (float)g_ct_a_peak * (BATT_ADC_VREF * 1000.0f) / BATT_ADC_FULL_SCALE;
         float v_corr = v_mv - CT_OFFSET_MV;
         if (v_corr < 0.0f) v_corr = 0.0f;
         telem->m1_current_ma = v_corr / CT_MV_PER_AMP * 1000.0f;
@@ -39,7 +39,7 @@ void Telemetry_BuildAndSend(Telemetry_t *telem)
     telem->m2_rpm          = Encoder_GetRPM(&g_enc_b);
     telem->m2_position_deg = Encoder_GetPositionDeg(&g_enc_b);
     {
-        float v_mv_b = (float)g_adc_dma_buf[2] * (BATT_ADC_VREF * 1000.0f) / BATT_ADC_FULL_SCALE;
+        float v_mv_b = (float)g_ct_b_peak * (BATT_ADC_VREF * 1000.0f) / BATT_ADC_FULL_SCALE;
         float v_corr_b = v_mv_b - CT_OFFSET_MV;
         if (v_corr_b < 0.0f) v_corr_b = 0.0f;
         telem->m2_current_ma = v_corr_b / CT_MV_PER_AMP * 1000.0f;
