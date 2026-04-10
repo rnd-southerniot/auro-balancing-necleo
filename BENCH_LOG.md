@@ -396,4 +396,42 @@ IMU was not initialized in HW-LIVE-01 so this was hidden.
 
 ---
 
-*auro-balancing-necleo · HW-LIVE-02 · All phases tested, OPEN-01 (CT sense) unresolved*
+---
+
+## HW-LIVE-03 — CT Resolution + Phase 7 Timing (2026-04-11)
+
+### OPEN-01 Resolution — CT Current Sense
+
+**Root cause:** CT wires physically swapped on H-bridge during chassis assembly.
+Motor A CT output was connected to PC4 (CT_B ADC channel) and vice versa.
+
+**Firmware fix 1:** Swapped DMA buffer indices (buf[2] for Motor A, buf[0] for Motor B)
+**Firmware fix 2:** Added 20ms peak-hold window (DBH-12V CT is pulsed, not DC)
+**Verified reading:** CT_A = 46.8 mA avg at 60 RPM no-load, 53% nonzero hit rate
+**Status:** CLOSED
+
+### Phase 7 — Control Loop Timing
+
+**Timer:** TIM11 at 50Hz
+**Firmware timestamp interval:** 20.000ms (exact)
+**Jitter:** 0ms peak-to-peak
+**Result:** PASS
+
+### ISR Priority Fix
+
+TIM10 (control ISR) lowered from priority 0 to priority 1.
+USART2 (VCP RX) at priority 0 can now preempt during blocking I2C reads.
+Commands received reliably — all motor tests pass.
+
+### Firmware Bugs Fixed (HW-LIVE-02 and HW-LIVE-03)
+
+| Bug | Session | Fix |
+|-----|---------|-----|
+| HW-BUG-02: Blocking I2C in ISR | HW-LIVE-02 | IMU 200Hz + NVIC priorities |
+| HW-BUG-03: UART RxState death | HW-LIVE-02 | Reset in ErrorCallback |
+| HW-BUG-04: CT peak-hold | HW-LIVE-03 | 20ms window for pulsed output |
+| HW-BUG-05: CT DMA buffer swap | HW-LIVE-03 | Indices corrected |
+
+---
+
+*auro-balancing-necleo · HW-LIVE-03 · ALL 7 PHASES PASS · Tag: v0.1.0-hw-validated*

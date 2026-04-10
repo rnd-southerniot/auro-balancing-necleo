@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>auro-balancing-necleo Hardware Validation Report</title>
+<style>
+  body { font-family: monospace; max-width: 960px; margin: 40px auto; padding: 0 20px; }
+  h1 { border-bottom: 3px solid #2a7a2a; color: #2a7a2a; }
+  h2 { border-bottom: 1px solid #ccc; margin-top: 2rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+  th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+  th { background: #f5f5f5; font-weight: bold; }
+  .pass { color: #2a7a2a; font-weight: bold; }
+  .banner { background: #eaf3de; border: 2px solid #2a7a2a; padding: 16px;
+            border-radius: 6px; margin: 1rem 0; font-size: 1.1em; }
+  .signoff { border: 1px solid #000; padding: 24px; margin-top: 3rem; }
+  pre { background: #f8f8f8; padding: 12px; overflow-x: auto; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>auro-balancing-necleo &mdash; Hardware Validation Report</h1>
+
+<div class="banner">
+  ALL 7 PHASES PASS &mdash; System hardware-validated<br>
+  <strong>Date:</strong> 2026-04-11 &nbsp;|&nbsp;
+  <strong>Tester:</strong> Arif, Southern IoT Limited R&amp;D &nbsp;|&nbsp;
+  <strong>Tag:</strong> v0.1.0-hw-validated &nbsp;|&nbsp;
+  <strong>Firmware:</strong> 99b608b
+</div>
+
+<h2>1. Phase Results</h2>
+<table>
+<thead><tr><th>Phase</th><th>Description</th><th>Result</th><th>Key measurement</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>VCP + power</td><td class="pass">PASS</td><td>268 frames, 0 CRC errors</td></tr>
+<tr><td>2</td><td>IMU</td><td class="pass">PASS</td><td>Pitch &ndash;28.4&deg;, accel 1.013g, gyro &lt;0.3 dps</td></tr>
+<tr><td>3</td><td>Encoders A+B</td><td class="pass">PASS</td><td>Both bidirectional, same polarity, 3.28V native</td></tr>
+<tr><td>4</td><td>ADC</td><td class="pass">PASS</td><td>12.30V vs 12.27V (0.24% error)</td></tr>
+<tr><td>5</td><td>PWM</td><td class="pass">PASS</td><td>Both motors FWD/REV</td></tr>
+<tr><td>6</td><td>Motors + CT</td><td class="pass">PASS</td><td>CT_A = 46.8 mA avg at 60 RPM no-load</td></tr>
+<tr><td>7</td><td>Timing</td><td class="pass">PASS</td><td>TIM11 = 20.000ms, 0ms jitter</td></tr>
+</tbody>
+</table>
+
+<h2>2. Open Items &mdash; All Closed</h2>
+<table>
+<thead><tr><th>ID</th><th>Root cause</th><th>Fix</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>OPEN-01</td><td>CT wires swapped on H-bridge</td>
+    <td>DMA buffer swap + 20ms peak-hold</td><td class="pass">CLOSED</td></tr>
+<tr><td>OPEN-02</td><td>Level shift not measured</td>
+    <td>3.28V native &mdash; no divider needed</td><td class="pass">CLOSED</td></tr>
+</tbody>
+</table>
+
+<h2>3. Firmware Bugs Fixed</h2>
+<table>
+<thead><tr><th>Bug</th><th>Session</th><th>Description</th><th>Fix</th></tr></thead>
+<tbody>
+<tr><td>HW-BUG-02</td><td>HW-LIVE-02</td><td>Blocking I2C in priority-0 ISR</td>
+    <td>IMU 200Hz, USART2 priority=0, TIM10 priority=1</td></tr>
+<tr><td>HW-BUG-03</td><td>HW-LIVE-02</td><td>UART RxState death after error</td>
+    <td>Reset RxState in ErrorCallback, restart IT</td></tr>
+<tr><td>HW-BUG-04</td><td>HW-LIVE-03</td><td>CT reads 0mA (pulsed output)</td>
+    <td>20ms peak-hold window per control cycle</td></tr>
+<tr><td>HW-BUG-05</td><td>HW-LIVE-03</td><td>CT DMA buffer indices swapped</td>
+    <td>Corrected: buf[2]=CT_A (PC3), buf[0]=CT_B (PC4)</td></tr>
+</tbody>
+</table>
+
+<h2>4. Key Hardware Parameters</h2>
+<table>
+<thead><tr><th>Parameter</th><th>Value</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>Balance setpoint</td><td>&ndash;28.4&deg;</td><td>Chassis resting pitch (hardware-measured)</td></tr>
+<tr><td>IMU update rate</td><td>200Hz</td><td>1kHz causes I2C/UART priority conflict</td></tr>
+<tr><td>CT peak-hold</td><td>20ms</td><td>DBH-12V CT output is pulsed</td></tr>
+<tr><td>CT_A at 60 RPM</td><td>46.8 mA</td><td>No-load baseline</td></tr>
+<tr><td>Encoder CPR</td><td>60,000</td><td>500PPR x 4 x 30:1 gear</td></tr>
+<tr><td>TIM11 period</td><td>20.000ms</td><td>0ms jitter</td></tr>
+<tr><td>Battery accuracy</td><td>0.24%</td><td>No calibration offset needed</td></tr>
+<tr><td>Encoder voltage</td><td>3.28V</td><td>Native &mdash; no level shift</td></tr>
+</tbody>
+</table>
+
+<h2>5. NVIC Priority Map</h2>
+<table>
+<thead><tr><th>Priority</th><th>Peripheral</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td>0 (highest)</td><td>USART2 (VCP RX)</td><td>Must not be preempted during I2C blocking</td></tr>
+<tr><td>1</td><td>TIM10 (1kHz control ISR)</td><td>Control loop with blocking I2C reads</td></tr>
+<tr><td>2</td><td>TIM11 (50Hz telemetry ISR)</td><td>Telemetry build + DMA TX</td></tr>
+<tr><td>3</td><td>DMA1_Stream6 (UART TX)</td><td>Background UART transmit</td></tr>
+</tbody>
+</table>
+
+<h2>6. Test Sessions</h2>
+<table>
+<thead><tr><th>Session</th><th>Date</th><th>Focus</th><th>Outcome</th></tr></thead>
+<tbody>
+<tr><td>HW-LIVE-01</td><td>2026-04-09</td><td>Motor A only, initial port</td><td>Gates 1,3,4,5,6 PASS (A only)</td></tr>
+<tr><td>HW-LIVE-02</td><td>2026-04-11</td><td>Post-chassis rewire, both motors</td><td>Gates 1-6 PASS, ISR bug found+fixed</td></tr>
+<tr><td>HW-LIVE-03</td><td>2026-04-11</td><td>CT diagnosis + Phase 7</td><td>All 7 PASS, OPEN-01+02 closed</td></tr>
+</tbody>
+</table>
+
+<h2>7. Next Actions</h2>
+<ol>
+<li><strong>HW-TUNE-01:</strong> RPM PID auto-tune both axes (relay feedback)</li>
+<li><strong>HW-TUNE-02:</strong> Enable balance control, set &ndash;28.4&deg; setpoint</li>
+<li><strong>HW-TUNE-03:</strong> Balance PID tuning on chassis</li>
+<li><strong>HW-TUNE-04:</strong> Disturbance rejection test</li>
+</ol>
+
+<div class="signoff">
+<h2>Sign-off</h2>
+<table style="border:none">
+<tr><td style="border:none;width:50%">Engineer: Arif</td>
+    <td style="border:none">Role: Head of R&amp;D</td></tr>
+<tr><td style="border:none">Organisation: Southern IoT Limited</td>
+    <td style="border:none">Date: 2026-04-11</td></tr>
+<tr><td style="border:none" colspan="2">Signature: ___________________________</td></tr>
+</table>
+</div>
+</body>
+</html>
