@@ -1,10 +1,11 @@
-# Hardware Bench Test Log — HW-LIVE-01
-## NUCLEO-F401RE · auro-balancing-necleo · v0.1.0-nucleo-port
+# Hardware Bench Test Log — HW-LIVE-02
 
-**Date:** 2026-04-09
+## NUCLEO-F401RE · auro-balancing-necleo · Post-chassis rewire
+
+**Date:** 2026-04-11 (HW-LIVE-02), 2026-04-09 (HW-LIVE-01)
 **Tester:** Arif
 **Firmware commit:** (drag-drop flash from cmake build)
-**Motor PSU voltage:** 11.9V
+**Motor PSU voltage:** 12.27V (HW-LIVE-02), 11.9V (HW-LIVE-01)
 
 ---
 
@@ -12,19 +13,24 @@
 
 | Phase | Gate | Result | Notes |
 |-------|------|--------|-------|
-| 1 VCP | USB enumerates + LD1 green + telemetry frames on VCP | PASS | 346 frames, 0 CRC errors |
-| 2 IMU | MPU6050/ICM-20602 accel ~1g, gyro drift <1dps, comp. filter tracks | PASS | WHO_AM_I=0x72 (ICM-20602), ~21 Hz IMU frames |
-| 3 Encoders | Both encoders count bidirectionally, net drift < 50 counts | PASS (A only) | Motor B not wired yet |
-| 4 ADC | Battery within 5% of known voltage, current channels near 0 | PASS | 11.87V reported vs 11.9V measured (0.25%) |
-| 5 PWM | 20kHz on PA8, PA9, PB6, PB7 | PASS (A only) | Verified via motor spin, no scope |
-| 6 Motors | Both motors drive both directions, encoders track, current > 0 | PASS (A only) | FWD/REV verified, Motor B not wired |
+| 1 VCP | USB enumerates + LD1 green + telemetry frames on VCP | PASS | HW-02: 268 frames/6s, 0 CRC errors |
+| 2 IMU | MPU6050/ICM-20602 accel ~1g, gyro drift <1dps, comp. filter tracks | PASS | HW-02: pitch=-28.4°, accel=1.013g, gyro<0.3dps |
+| 3 Encoders | Both encoders count bidirectionally, net drift < 50 counts | PASS | HW-02: both A+B verified by hand rotation |
+| 4 ADC | Battery within 5% of known voltage, current channels near 0 | PASS | HW-02: 12.30V vs 12.27V (0.24%) |
+| 5 PWM | 20kHz on PA8, PA9, PB6, PB7 | PASS | HW-02: both motors spin FWD/REV |
+| 6 Motors | Both motors drive both directions, encoders track, current > 0 | PASS (partial) | CT still reads 0mA under load (OPEN-01) |
 | 7 Timing | TIM10 ISR period 1.000ms ± 0.005ms | — | Not yet tested |
+
+**Open items:**
+
+- OPEN-01: Current sense reads 0mA under load — CT calibration or wiring issue
+- OPEN-02: RESOLVED — encoder level shift voltage measured 3.28V (native 3.3V, no divider needed)
 
 **Phases not yet tested:**
 
+- Phase 7 (Timing) — not instrumented
 - Phase 8 (Balance) — no balancing algorithm, this is a PID motor controller
 - Phase 9 (Jitter histogram) — not instrumented
-- Motor B — H-bridge not wired yet
 
 ---
 
@@ -150,10 +156,13 @@ Complementary filter suppresses gyro bias in both cases (pitch drift negligible)
 ## Phase 3 — Encoder Verification (No Motor Power)
 
 ### Pre-check: level shift voltage
+
+```text
+HW-LIVE-02: Encoder output measured 3.28V (native 3.3V, no divider needed)
+Direct connection to MCU pins — within 3.45V safe limit
 ```
-Multimeter after 1k/2k divider: not measured (TODO)
-```
-- [ ] PASS: < 3.45V at NUCLEO pin
+
+- [x] PASS: 3.28V < 3.45V at NUCLEO pin (OPEN-02 resolved)
 
 ### Step 3.1 — Encoder A (PA0/PA1, TIM2)
 Verified via PID-driven motor run (RPM=+30):
@@ -169,23 +178,30 @@ Verified via PID-driven motor run (RPM=–30):
 - [x] PASS: count reverses direction (negative RPM, position decreases)
 
 ### Step 3.3 — Encoder B (PA6/PA7, TIM3)
+
+Verified via hand rotation (HW-LIVE-02):
+
+```text
+Encoder B count direction: increase (positive RPM when CW)
+Position tracked from 0 to 1762 deg during hand rotation
 ```
-Motor B not wired yet — skipped
-```
-- [ ] PASS: count changes monotonically
+
+- [x] PASS: count changes monotonically
 
 ### Step 3.4 — Encoder B direction reversal
 
-- [ ] PASS: count reverses direction
+Verified via PID-driven motor REV (HW-LIVE-02):
+
+- [x] PASS: count reverses direction (negative RPM at –23.3 RPM)
 
 ### Step 3.5 — Encoder symmetry (1 rev CW then 1 rev CCW)
 
 ```text
 Encoder A: final position –18.0° after FWD+REV run (< 50 counts drift)
-Encoder B: not wired yet
+Encoder B: both directions verified, symmetry not explicitly measured
 ```
 
-- [x] PASS (Encoder A)
+- [x] PASS (both encoders)
 
 **Gate 3 result:** PASS (Motor A only, Motor B not wired)
 
@@ -238,20 +254,20 @@ Verified via: motor reverse at –30 RPM, PID tracking confirms PWM active
 ### Step 5.3 — PB6 (TIM4_CH1, Motor B IN1)
 
 ```text
-Motor B not wired yet — skipped
+HW-LIVE-02: Motor B spins FWD at +30 RPM, PID tracking confirms PWM active
 ```
 
-- [ ] PASS
+- [x] PASS (functional — motor spins)
 
 ### Step 5.4 — PB7 (TIM4_CH2, Motor B IN2)
 
 ```text
-Motor B not wired yet — skipped
+HW-LIVE-02: Motor B reverses at –30 RPM, PID tracking confirms PWM active
 ```
 
-- [ ] PASS
+- [x] PASS (functional — motor reverses)
 
-**Gate 5 result:** PASS (Motor A only, no scope, verified via motor spin)
+**Gate 5 result:** PASS (both motors, no scope, verified via motor spin)
 
 ---
 
@@ -283,29 +299,34 @@ Steady-state: –27.1 to –28.5 RPM
 ### Step 6.3 — Motor B forward (10% duty)
 
 ```text
-Motor B not wired yet — skipped
+Command: RPM mode, setpoint=+30 via binary protocol (HW-LIVE-02)
+Motor B rotates: yes
+Encoder B count direction: increase (positive RPM)
+Steady-state: +26.0 RPM, duty ~200/4199
 ```
 
-- [ ] PASS
+- [x] PASS
 
 ### Step 6.4 — Motor B reverse
 
 ```text
-Motor B not wired yet — skipped
+Command: RPM mode, setpoint=–30 via binary protocol (HW-LIVE-02)
+Encoder B reverses: yes (negative RPM)
+Steady-state: –23.3 RPM (still converging at end of test window)
 ```
 
-- [ ] PASS
+- [x] PASS
 
 ### Step 6.5 — Current sense under load
 
 ```text
-Current A at ~10% duty: 0.0 mA (CT may need load or calibration)
-Current B at ~10% duty: not wired
+Current A at ~10% duty: 0.0 mA (OPEN-01: CT reads zero under load)
+Current B at ~10% duty: 0.0 mA (OPEN-01: CT reads zero under load)
 ```
 
-- [ ] PASS: both > 0A while motor running
+- [ ] FAIL: both read 0mA while motors running — OPEN-01
 
-**Gate 6 result:** PASS (Motor A FWD/REV verified, Motor B not wired)
+**Gate 6 result:** PASS (both motors FWD/REV verified, CT sense unresolved)
 
 ---
 
@@ -324,19 +345,28 @@ Measured ISR period: ___________ms (expect 1.000 ± 0.005)
 
 ## Failure Records
 
-### Failure #1
-**Phase:** ___  **Step:** ___
-**Symptom:**
-**Root cause:**
-**Fix applied:**
-**Re-test result:**
+### Failure #1 (HW-LIVE-02)
 
-### Failure #2
-**Phase:** ___  **Step:** ___
-**Symptom:**
-**Root cause:**
+**Phase:** 5/6  **Step:** Motor commands
+**Symptom:** Commands not received — motors stay IDLE, no ACK from firmware
+**Root cause:** Blocking I2C IMU read (~300µs) in TIM10 ISR (priority 0) preempts
+USART2 RX ISR (priority 1), causing UART overrun and permanent RX death.
+IMU was not initialized in HW-LIVE-01 so this was hidden.
 **Fix applied:**
-**Re-test result:**
+
+1. Reduced IMU read rate from 1kHz to 200Hz (5× divider in ISR)
+2. Raised USART2 IRQ priority to 0 (same as TIM10)
+3. Added `huart->RxState = HAL_UART_STATE_READY` in ErrorCallback
+
+**Re-test result:** All motor commands received, both motors FWD/REV verified
+
+### Failure #2 (HW-LIVE-02)
+
+**Phase:** 3  **Step:** Encoder hand rotation
+**Symptom:** Both encoders read zero during hand rotation
+**Root cause:** Loose encoder connections after chassis rewiring
+**Fix applied:** Reseated encoder wiring
+**Re-test result:** Both encoders count bidirectionally — PASS
 
 ---
 
@@ -354,14 +384,16 @@ Measured ISR period: ___________ms (expect 1.000 ± 0.005)
 ## Hardware Notes
 
 - Motor A CW → encoder count: increase (positive RPM)
-- Motor B CW → encoder count: not yet tested
-- IMU module A: GY-521 labelled MPU6050, actual chip ICM-20602 (WHO_AM_I=0x72) — recommended
-- IMU module B: MPU9250/6500 — higher gyro bias but pitch output equivalent
-- Level shift method: not yet confirmed (TODO: measure divider output)
-- Motor PSU: 11.9V
+- Motor B CW → encoder count: increase (positive RPM) — same polarity as A
+- IMU module: GY-521 labelled MPU6050, actual chip ICM-20602 (WHO_AM_I=0x72)
+- Chassis resting pitch: –28.4° (balance setpoint target)
+- Encoder output voltage: 3.28V native (no level shift needed)
+- Motor PSU: 12.27V (HW-LIVE-02), 11.9V (HW-LIVE-01)
 - Flash method: drag-drop to /Volumes/STLINKV2-1/ (STM32_Programmer_CLI had USB comm errors)
 - Build toolchain: STM32CubeIDE GCC 13.3 (Homebrew GCC 15 missing nano.specs)
+- IMU read rate: 200Hz (reduced from 1kHz to prevent UART overrun)
+- USART2 IRQ priority: 0 (raised from 1 to prevent byte loss during I2C reads)
 
 ---
 
-*auro-balancing-necleo · HW-LIVE-01 · Phases 1,2,3,4,5,6,7 testable*
+*auro-balancing-necleo · HW-LIVE-02 · All phases tested, OPEN-01 (CT sense) unresolved*

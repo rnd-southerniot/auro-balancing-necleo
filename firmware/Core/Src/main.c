@@ -292,10 +292,20 @@ static void App_ControlTick(void)
     /* 1. Encoder update */
     Encoder_Update(&g_enc_a);
 
-    /* 1b. IMU read + complementary filter update */
-    if (g_imu.initialized) {
-        IMU_ReadAll(&g_imu);
-        IMU_UpdateAngle(&g_imu, PID_DT_S);
+    /* 1b. IMU read + complementary filter update.
+     * Blocking I2C read (~300 µs at 400 kHz) must not run every tick —
+     * it preempts USART2 RX (priority 1) and causes byte loss.
+     * 200 Hz (every 5th tick) is sufficient for the complementary filter. */
+    {
+        static uint8_t imu_div = 0U;
+        imu_div++;
+        if (imu_div >= 5U) {
+            imu_div = 0U;
+            if (g_imu.initialized) {
+                IMU_ReadAll(&g_imu);
+                IMU_UpdateAngle(&g_imu, 5.0f * PID_DT_S);
+            }
+        }
     }
 
     /* 2. ADC readings */
@@ -764,10 +774,13 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART2) {
-        /* Clear error flags and re-arm RX */
+        /* Clear error flags and force RxState ready before re-arming.
+         * Without the RxState reset, HAL_UART_Receive_IT returns BUSY
+         * after an overrun and RX is permanently lost. */
         __HAL_UART_CLEAR_OREFLAG(huart);
         __HAL_UART_CLEAR_NEFLAG(huart);
         __HAL_UART_CLEAR_FEFLAG(huart);
+        huart->RxState = HAL_UART_STATE_READY;
         HAL_UART_Receive_IT(&huart2, (uint8_t *)&g_uart_rx_byte, 1U);
     }
 }
