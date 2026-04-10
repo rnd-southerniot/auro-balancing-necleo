@@ -1,0 +1,13 @@
+std_msgs/Header header
+float32 pitch_deg
+float32 pitch_setpoint_deg
+float32 balance_output
+float32 rpm_a
+float32 rpm_b
+float32 rpm_setpoint_a
+float32 rpm_setpoint_b
+float32 duty_a
+float32 duty_b
+float32 battery_voltage
+uint8 mode
+uint8 fault_flags
