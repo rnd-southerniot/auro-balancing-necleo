@@ -169,26 +169,16 @@ int main(void)
     HAL_TIM_Base_Start_IT(&htim10);
     HAL_TIM_Base_Start_IT(&htim11);
 
-    /* ── Main loop ─────────────────────────────────────────── */
-    uint32_t heartbeat_next = 0U;
+    /* ── Start FreeRTOS scheduler ─────────────────────────── */
+    /* All ISR-driven control (TIM10 PID, TIM11 telemetry, UART RX)
+     * continues to work unchanged. FreeRTOS runs alongside them.
+     * The heartbeat + watchdog move to the FreeRTOS idle hook or
+     * a dedicated low-priority task. */
+    extern void app_freertos_init(void);
+    app_freertos_init();  /* Creates tasks and starts scheduler — does not return */
 
-    while (1) {
-        __WFI();
-
-        HAL_IWDG_Refresh(&hiwdg);
-
-        /* Heartbeat LED toggle @ 1 Hz */
-        uint32_t now = HAL_GetTick();
-        if (now >= heartbeat_next) {
-            heartbeat_next = now + 500U;
-            HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-        }
-
-        /* Stack canary check */
-        if (*stack_canary_ptr != STACK_CANARY_WORD) {
-            Error_Handler();
-        }
-    }
+    /* Should never reach here */
+    for (;;) {}
 }
 
 /* ================================================================
