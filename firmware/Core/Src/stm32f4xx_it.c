@@ -75,7 +75,12 @@ void TIM1_TRG_COM_TIM11_IRQHandler(void)
 
 void USART2_IRQHandler(void)
 {
+#if !defined(MICROROS_ENABLED)
+    /* micro-ROS uses blocking HAL_UART_Transmit/Receive on USART2.
+     * The HAL IRQ handler must NOT run — it corrupts the blocking
+     * state machine and prevents transport from working. */
     HAL_UART_IRQHandler(&huart2);
+#endif
 }
 
 void I2C1_EV_IRQHandler(void)

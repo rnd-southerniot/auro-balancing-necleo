@@ -47,10 +47,15 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
         HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 3, 0);
         HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
+#if !defined(MICROROS_ENABLED)
         /* USART2 must preempt TIM10 (priority 0) to avoid byte loss
          * during blocking I2C reads inside the 1 kHz control ISR. */
         HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
         HAL_NVIC_EnableIRQ(USART2_IRQn);
+#else
+        /* micro-ROS uses blocking HAL_UART calls — no IRQ needed.
+         * DMA TX IRQ also disabled (no telemetry in micro-ROS mode). */
+#endif
     }
 }
 
