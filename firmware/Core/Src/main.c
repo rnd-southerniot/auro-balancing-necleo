@@ -76,8 +76,10 @@ extern uint32_t _estack;
 extern uint32_t _Min_Stack_Size;
 static volatile uint32_t *stack_canary_ptr;
 
+#if !defined(MICROROS_ENABLED)
 /* ── TX buffer for response frames ─────────────────────────── */
 static uint8_t tx_resp_buf[COMM_MAX_FRAME_SIZE];
+#endif
 
 /* ================================================================
  * Forward declarations
@@ -98,10 +100,12 @@ static void MX_I2C1_Init(void);
 /* static void MX_IWDG_Init(void); — disabled during bench debug */
 
 static void App_InitModules(void);
+#if !defined(MICROROS_ENABLED)
 static void App_ProcessCommand(void);
 static void App_SendAck(uint8_t msg_type);
 static void App_SendNack(uint8_t msg_type, NackCode_t code);
 static void App_SendAutotuneResult(const Autotune_t *at);
+#endif
 
 /* ================================================================
  * Helpers
@@ -162,8 +166,11 @@ int main(void)
     /* Start ADC DMA (circular) */
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)g_adc_dma_buf, ADC_NUM_CHANNELS);
 
-    /* Start UART receive (interrupt, single byte at a time) */
+#if !defined(MICROROS_ENABLED)
+    /* Start UART receive (interrupt, single byte at a time).
+     * Disabled when micro-ROS is enabled — transport owns USART2. */
     HAL_UART_Receive_IT(&huart2, (uint8_t *)&g_uart_rx_byte, 1U);
+#endif
 
     /* Start tick timers */
     HAL_TIM_Base_Start_IT(&htim10);
@@ -421,7 +428,9 @@ static void App_ControlTick(void)
                 PID_SetGains(&g_pid_rpm, kp, ki, kd);
                 g_mode = CTRL_IDLE;
                 Motor_Coast(&g_motor_a);
+#if !defined(MICROROS_ENABLED)
                 App_SendAutotuneResult(&g_autotune_a);
+#endif
                 g_applied_duty = 0U;
                 motor_a_active = 0U;
             } else if (Autotune_GetState(&g_autotune_a) == AT_FAILED) {
@@ -498,7 +507,9 @@ motor_b_tick:
             PID_SetGains(&g_pid_rpm_b, kpb, kib, kdb);
             g_mode_b = CTRL_IDLE;
             Motor_Coast(&g_motor_b);
+#if !defined(MICROROS_ENABLED)
             App_SendAutotuneResult(&g_autotune_b);
+#endif
             g_applied_duty_b = 0U;
             motor_b_active = 0U;
         } else if (Autotune_GetState(&g_autotune_b) == AT_FAILED) {
@@ -537,8 +548,9 @@ motor_b_tick:
     }
 }
 
+#if !defined(MICROROS_ENABLED)
 /* ================================================================
- * Command dispatch
+ * Command dispatch (disabled when micro-ROS owns USART2)
  * ================================================================ */
 
 static void App_ProcessCommand(void)
@@ -758,6 +770,8 @@ static void App_SendAutotuneResult(const Autotune_t *at)
     HAL_UART_Transmit(&huart2, tx_resp_buf, len, 10U);
 }
 
+#endif /* !MICROROS_ENABLED — end command dispatch block */
+
 /* ================================================================
  * HAL callbacks
  * ================================================================ */
@@ -766,39 +780,51 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM10) {
         App_ControlTick();
-    } else if (htim->Instance == TIM11) {
+    }
+#if !defined(MICROROS_ENABLED)
+    else if (htim->Instance == TIM11) {
+        /* Telemetry uses UART DMA TX — disabled when micro-ROS owns USART2 */
         Telemetry_BuildAndSend(&g_telem);
     }
+#endif
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+#if !defined(MICROROS_ENABLED)
     if (huart->Instance == USART2) {
         if (Comm_ReceiveByte(&g_comm_rx, g_uart_rx_byte)) {
             App_ProcessCommand();
         }
         HAL_UART_Receive_IT(&huart2, (uint8_t *)&g_uart_rx_byte, 1U);
     }
+#else
+    (void)huart;
+#endif
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
+#if !defined(MICROROS_ENABLED)
     if (huart->Instance == USART2) {
         Telemetry_TxCompleteCallback(&g_telem);
     }
+#else
+    (void)huart;
+#endif
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART2) {
-        /* Clear error flags and force RxState ready before re-arming.
-         * Without the RxState reset, HAL_UART_Receive_IT returns BUSY
-         * after an overrun and RX is permanently lost. */
         __HAL_UART_CLEAR_OREFLAG(huart);
         __HAL_UART_CLEAR_NEFLAG(huart);
         __HAL_UART_CLEAR_FEFLAG(huart);
+#if !defined(MICROROS_ENABLED)
+        /* Re-arm IT receive — micro-ROS uses blocking receive instead */
         huart->RxState = HAL_UART_STATE_READY;
         HAL_UART_Receive_IT(&huart2, (uint8_t *)&g_uart_rx_byte, 1U);
+#endif
     }
 }
 
