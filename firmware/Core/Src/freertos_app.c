@@ -66,7 +66,8 @@ static void microros_task(void *arg)
     freertos_alloc.deallocate    = microros_deallocate;
     freertos_alloc.reallocate    = microros_reallocate;
     freertos_alloc.zero_allocate = microros_zero_allocate;
-    rcutils_set_default_allocator(&freertos_alloc);
+    bool alloc_ok __attribute__((unused)) =
+        rcutils_set_default_allocator(&freertos_alloc);
 
     /* UART transport over USART2 (existing VCP, 921600 baud) */
     rmw_uros_set_custom_transport(
@@ -102,7 +103,8 @@ static void microros_task(void *arg)
     /* Publish heartbeat at 1Hz */
     for (;;) {
         msg.data++;
-        rcl_publish(&pub, &msg, NULL);
+        rcl_ret_t pub_rc __attribute__((unused)) =
+            rcl_publish(&pub, &msg, NULL);
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
