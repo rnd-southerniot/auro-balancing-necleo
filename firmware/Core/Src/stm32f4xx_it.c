@@ -8,6 +8,8 @@
  */
 
 #include "main.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 /* ── Cortex-M4 system exceptions ───────────────────────────── */
 
@@ -40,21 +42,23 @@ void UsageFault_Handler(void)
     }
 }
 
-void SVC_Handler(void)
-{
-}
+/* SVC_Handler and PendSV_Handler are provided by FreeRTOS portable layer
+ * (mapped via FreeRTOSConfig.h: vPortSVCHandler, xPortPendSVHandler) */
 
 void DebugMon_Handler(void)
-{
-}
-
-void PendSV_Handler(void)
 {
 }
 
 void SysTick_Handler(void)
 {
     HAL_IncTick();
+#if defined(INCLUDE_xTaskGetSchedulerState) && defined(configUSE_PREEMPTION)
+    extern void xPortSysTickHandler(void);
+    /* Only call FreeRTOS tick if scheduler is running */
+    if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+        xPortSysTickHandler();
+    }
+#endif
 }
 
 /* ── Peripheral interrupts ─────────────────────────────────── */

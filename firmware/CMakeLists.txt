@@ -93,6 +93,29 @@ else()
         ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
     )
 
+    # ── FreeRTOS kernel ──────────────────────────────────────
+    set(FREERTOS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/FreeRTOS/Source)
+    set(FREERTOS_SRCS
+        ${FREERTOS_DIR}/tasks.c
+        ${FREERTOS_DIR}/queue.c
+        ${FREERTOS_DIR}/list.c
+        ${FREERTOS_DIR}/timers.c
+        ${FREERTOS_DIR}/event_groups.c
+        ${FREERTOS_DIR}/stream_buffer.c
+        ${FREERTOS_DIR}/portable/GCC/ARM_CM4F/port.c
+        ${FREERTOS_DIR}/portable/MemMang/heap_4.c
+    )
+
+    # ── micro-ROS static library (built on Ubuntu VM) ────────
+    set(MICROROS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/micro_ros)
+    set(MICROROS_AVAILABLE OFF)
+    if(EXISTS ${MICROROS_DIR}/libmicroros.a)
+        set(MICROROS_AVAILABLE ON)
+        message(STATUS "micro-ROS library found: ${MICROROS_DIR}/libmicroros.a")
+    else()
+        message(STATUS "micro-ROS library NOT found — building FreeRTOS-only firmware")
+    endif()
+
     # Collect application sources
     file(GLOB CORE_SRCS Core/Src/*.c)
 
@@ -100,6 +123,7 @@ else()
         ${CORE_SRCS}
         ${HAL_SRCS}
         ${CMSIS_SRCS}
+        ${FREERTOS_SRCS}
         startup_stm32f401retx.s
     )
 
@@ -109,7 +133,21 @@ else()
         ${HAL_DIR}/Inc
         Drivers/CMSIS/Device/ST/STM32F4xx/Include
         Drivers/CMSIS/Include
+        ${FREERTOS_DIR}/include
+        ${FREERTOS_DIR}/portable/GCC/ARM_CM4F
     )
+
+    if(MICROROS_AVAILABLE)
+        target_include_directories(firmware.elf PRIVATE
+            ${MICROROS_DIR}/include
+        )
+        target_link_libraries(firmware.elf PRIVATE
+            ${MICROROS_DIR}/libmicroros.a
+        )
+        target_compile_definitions(firmware.elf PRIVATE
+            MICROROS_ENABLED=1
+        )
+    endif()
 
     target_compile_definitions(firmware.elf PRIVATE
         STM32F401xE
