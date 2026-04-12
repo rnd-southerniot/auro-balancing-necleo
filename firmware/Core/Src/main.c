@@ -57,6 +57,7 @@ UART_HandleTypeDef     huart6;         /* USART6: micro-ROS → ESP32-S3 */
 ADC_HandleTypeDef      hadc1;          /* Motor A current + battery + Motor B current */
 DMA_HandleTypeDef      hdma_adc1;
 DMA_HandleTypeDef      hdma_usart2_tx;
+DMA_HandleTypeDef      hdma_usart6_rx;  /* USART6 RX DMA for micro-ROS */
 IWDG_HandleTypeDef     hiwdg;
 I2C_HandleTypeDef      hi2c1;          /* MPU6050 IMU (PB8/PB9)        */
 

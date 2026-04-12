@@ -56,6 +56,7 @@ extern TIM_HandleTypeDef     htim10;  /* PID loop tick 1 kHz          */
 extern TIM_HandleTypeDef     htim11;  /* Telemetry tick 50 Hz         */
 extern UART_HandleTypeDef    huart2;  /* ST-LINK VCP (USART2)         */
 extern UART_HandleTypeDef    huart6;  /* micro-ROS → ESP32-S3 (USART6) */
+extern DMA_HandleTypeDef     hdma_usart6_rx;
 extern ADC_HandleTypeDef     hadc1;   /* CT_A + battery + CT_B        */
 extern DMA_HandleTypeDef     hdma_adc1;
 extern DMA_HandleTypeDef     hdma_usart2_tx;
