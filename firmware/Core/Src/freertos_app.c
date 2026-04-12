@@ -41,7 +41,8 @@ extern void *microros_reallocate(void *pointer, size_t size, void *state);
 extern void *microros_zero_allocate(size_t num, size_t size, void *state);
 
 /* Shared node for all publisher tasks */
-rcl_node_t      g_ros_node;
+rcl_node_t       g_ros_node;
+rclc_support_t   g_ros_support;
 volatile uint8_t g_ros_ready = 0U;
 #endif /* MICROROS_ENABLED */
 
@@ -104,14 +105,14 @@ static void microros_task(void *arg)
 
     /* Stage 5: Init micro-ROS node (shared with publisher tasks) */
     rcl_allocator_t allocator = rcl_get_default_allocator();
-    static rclc_support_t support;
+    /* Note: g_ros_support is global — used by cmd_vel executor */
     rcl_publisher_t pub;
     std_msgs__msg__Int32 msg;
 
-    if (rclc_support_init(&support, 0, NULL, &allocator) != RCL_RET_OK) {
+    if (rclc_support_init(&g_ros_support, 0, NULL, &allocator) != RCL_RET_OK) {
         for (;;) blink_error(5);
     }
-    if (rclc_node_init_default(&g_ros_node, "auro_stm32", "auro", &support) != RCL_RET_OK) {
+    if (rclc_node_init_default(&g_ros_node, "auro_stm32", "auro", &g_ros_support) != RCL_RET_OK) {
         for (;;) blink_error(6);
     }
     if (rclc_publisher_init_best_effort(&pub, &g_ros_node,
@@ -126,9 +127,11 @@ static void microros_task(void *arg)
     extern void ros_imu_task(void *arg);
     extern void ros_odom_task(void *arg);
     extern void ros_diag_task(void *arg);
-    xTaskCreate(ros_imu_task,  "imu",  1536, NULL, 3, NULL);
-    xTaskCreate(ros_odom_task, "odom", 1536, NULL, 2, NULL);
-    xTaskCreate(ros_diag_task, "diag", 1024, NULL, 1, NULL);
+    extern void cmd_vel_task(void *arg);
+    xTaskCreate(ros_imu_task,  "imu",    1536, NULL, 3, NULL);
+    xTaskCreate(ros_odom_task, "odom",   1536, NULL, 2, NULL);
+    xTaskCreate(ros_diag_task, "diag",   1024, NULL, 1, NULL);
+    xTaskCreate(cmd_vel_task,  "cmdvel", 1536, NULL, 3, NULL);
 
     blink_error(5);  /* 5 blinks = all publishers ready */
 
