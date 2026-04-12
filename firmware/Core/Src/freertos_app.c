@@ -123,13 +123,14 @@ static void microros_task(void *arg)
     /* Signal publisher tasks that node is ready */
     g_ros_ready = 1U;
 
-    /* Start publisher tasks */
+    /* TODO: re-enable after DDS echo verified working
     extern void ros_imu_task(void *arg);
     extern void ros_odom_task(void *arg);
     extern void ros_diag_task(void *arg);
-    xTaskCreate(ros_imu_task,  "imu",  2048, NULL, 3, NULL);
-    xTaskCreate(ros_odom_task, "odom", 2048, NULL, 2, NULL);
-    xTaskCreate(ros_diag_task, "diag", 2048, NULL, 1, NULL);
+    xTaskCreate(ros_imu_task,  "imu",  1536, NULL, 3, NULL);
+    xTaskCreate(ros_odom_task, "odom", 1536, NULL, 2, NULL);
+    xTaskCreate(ros_diag_task, "diag", 1024, NULL, 1, NULL);
+    */
 
     blink_error(5);  /* 5 blinks = all publishers ready */
 
