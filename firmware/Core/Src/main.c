@@ -37,8 +37,8 @@ volatile uint32_t      g_last_cmd_ms_b;
 volatile uint16_t      g_applied_duty_b;
 
 /* ── Differential drive ────────────────────────────────────── */
-static volatile float  g_diff_linear;
-static volatile float  g_diff_angular;
+volatile float  g_diff_linear;
+volatile float  g_diff_angular;
 
 /* ── Shared state ──────────────────────────────────────────── */
 Telemetry_t            g_telem;
