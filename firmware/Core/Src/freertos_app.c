@@ -81,7 +81,7 @@ static void microros_task(void *arg)
      * overrides in microros_allocators.c instead) */
     if (rmw_uros_set_custom_transport(
             true,
-            (void *)&huart2,
+            (void *)&huart6,  /* USART6 → ESP32-S3 WiFi bridge */
             cubemx_transport_open,
             cubemx_transport_close,
             cubemx_transport_write,

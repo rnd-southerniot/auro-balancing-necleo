@@ -1,20 +1,25 @@
 /**
  * @file microros_transport.c
- * @brief UART serial transport for micro-ROS (USART2, 921600 baud).
+ * @brief USART6 transport for micro-ROS via ESP32-S3 WiFi bridge.
  *
- * Uses existing HW-validated VCP wiring: PA2=TX, PA3=RX.
- * USART2 NVIC priority = 0 (highest) — preserved from HW-BUG-02 fix.
+ * USART6 pins (AF8):
+ *   PC6 = TX (CN10 pin 4)  → ESP32-S3 GPIO17 (RX)
+ *   PC7 = RX (CN10 pin 19) ← ESP32-S3 GPIO18 (TX)
+ *   921600 baud
+ *
+ * ESP32-S3 bridges UART ↔ WiFi UDP to agent at 10.10.8.110:8888.
+ * USART2 (PA2/PA3) remains as ST-LINK VCP — completely unchanged.
  */
 
 #include "main.h"
 #include <uxr/client/transport.h>
 
-extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart6;
 
 bool cubemx_transport_open(struct uxrCustomTransport *transport)
 {
     (void)transport;
-    return true;  /* huart2 already initialized by MX_USART2_UART_Init */
+    return true;
 }
 
 bool cubemx_transport_close(struct uxrCustomTransport *transport)
@@ -29,7 +34,7 @@ size_t cubemx_transport_write(struct uxrCustomTransport *transport,
 {
     (void)transport;
     HAL_StatusTypeDef status =
-        HAL_UART_Transmit(&huart2, (uint8_t *)buf, (uint16_t)len, 100);
+        HAL_UART_Transmit(&huart6, (uint8_t *)buf, (uint16_t)len, 100);
     *errcode = (status == HAL_OK) ? 0U : 1U;
     return (status == HAL_OK) ? len : 0;
 }
@@ -39,8 +44,10 @@ size_t cubemx_transport_read(struct uxrCustomTransport *transport,
                               int timeout_ms, uint8_t *errcode)
 {
     (void)transport;
+    /* The stream framing layer calls read with len=1 to read byte-by-byte.
+     * Use blocking HAL_UART_Receive for the full requested length. */
     HAL_StatusTypeDef status =
-        HAL_UART_Receive(&huart2, buf, (uint16_t)len, (uint32_t)timeout_ms);
+        HAL_UART_Receive(&huart6, buf, (uint16_t)len, (uint32_t)timeout_ms);
     *errcode = (status == HAL_OK) ? 0U : 1U;
     return (status == HAL_OK) ? len : 0;
 }

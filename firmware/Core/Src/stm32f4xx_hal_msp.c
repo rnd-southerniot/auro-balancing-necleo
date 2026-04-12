@@ -28,7 +28,10 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
         gpio.Alternate = GPIO_AF7_USART2;
         HAL_GPIO_Init(GPIOA, &gpio);
 
-        /* USART2 TX DMA: DMA1 Stream6 Channel4 */
+#if !defined(MICROROS_ENABLED)
+        /* USART2 TX DMA — only for telemetry (disabled with micro-ROS).
+         * micro-ROS uses polling HAL_UART_Transmit which conflicts
+         * with DMA link on huart->hdmatx. */
         hdma_usart2_tx.Instance                 = DMA1_Stream6;
         hdma_usart2_tx.Init.Channel             = DMA_CHANNEL_4;
         hdma_usart2_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
@@ -46,6 +49,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
         /* NVIC */
         HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 3, 0);
         HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+#endif
 
 #if !defined(MICROROS_ENABLED)
         /* USART2 must preempt TIM10 (priority 0) to avoid byte loss
@@ -56,6 +60,22 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
         /* micro-ROS uses blocking HAL_UART calls — no IRQ needed.
          * DMA TX IRQ also disabled (no telemetry in micro-ROS mode). */
 #endif
+    }
+
+    if (huart->Instance == USART6) {
+        /* USART6: micro-ROS transport → ESP32-S3 WiFi bridge
+         * PC6 = TX (AF8, CN10 pin 4) → ESP32 GPIO17 (RX)
+         * PC7 = RX (AF8, CN10 pin 19) ← ESP32 GPIO18 (TX) */
+        __HAL_RCC_USART6_CLK_ENABLE();
+        __HAL_RCC_GPIOC_CLK_ENABLE();
+
+        GPIO_InitTypeDef gpio = {0};
+        gpio.Pin       = GPIO_PIN_6 | GPIO_PIN_7;
+        gpio.Mode      = GPIO_MODE_AF_PP;
+        gpio.Pull      = GPIO_PULLUP;
+        gpio.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+        gpio.Alternate = GPIO_AF8_USART6;
+        HAL_GPIO_Init(GPIOC, &gpio);
     }
 }
 

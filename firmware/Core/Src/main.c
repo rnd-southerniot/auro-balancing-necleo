@@ -53,6 +53,7 @@ TIM_HandleTypeDef      htim4;          /* PWM motor B (PB6/PB7)        */
 TIM_HandleTypeDef      htim10;         /* 1 kHz PID tick               */
 TIM_HandleTypeDef      htim11;         /* 50 Hz telem tick             */
 UART_HandleTypeDef     huart2;         /* ST-LINK VCP                  */
+UART_HandleTypeDef     huart6;         /* USART6: micro-ROS → ESP32-S3 */
 ADC_HandleTypeDef      hadc1;          /* Motor A current + battery + Motor B current */
 DMA_HandleTypeDef      hdma_adc1;
 DMA_HandleTypeDef      hdma_usart2_tx;
@@ -95,6 +96,7 @@ static void MX_TIM4_Init(void);
 static void MX_TIM10_Init(void);
 static void MX_TIM11_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_USART6_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_I2C1_Init(void);
 /* static void MX_IWDG_Init(void); — disabled during bench debug */
@@ -142,6 +144,7 @@ int main(void)
     MX_TIM10_Init();
     MX_TIM11_Init();
     MX_USART2_UART_Init();
+    MX_USART6_Init();
     MX_ADC1_Init();
     MX_I2C1_Init();
     /* MX_IWDG_Init(); — disabled during bench debug: IWDG reset loop */
@@ -1003,6 +1006,24 @@ static void MX_USART2_UART_Init(void)
     huart2.Init.OverSampling = UART_OVERSAMPLING_16;
 
     HAL_UART_Init(&huart2);
+}
+
+static void MX_USART6_Init(void)
+{
+    /* USART6: 921600 baud, micro-ROS transport → ESP32-S3 WiFi bridge.
+     * PC6 = TX (CN10 pin 4, AF8) → ESP32 GPIO17 (RX)
+     * PC7 = RX (CN10 pin 19, AF8) ← ESP32 GPIO18 (TX)
+     * GPIO/NVIC in HAL_UART_MspInit. */
+    huart6.Instance          = USART6;
+    huart6.Init.BaudRate     = 921600U;
+    huart6.Init.WordLength   = UART_WORDLENGTH_8B;
+    huart6.Init.StopBits     = UART_STOPBITS_1;
+    huart6.Init.Parity       = UART_PARITY_NONE;
+    huart6.Init.Mode         = UART_MODE_TX_RX;
+    huart6.Init.HwFlowCtl    = UART_HWCONTROL_NONE;
+    huart6.Init.OverSampling = UART_OVERSAMPLING_16;
+
+    HAL_UART_Init(&huart6);
 }
 
 static void MX_ADC1_Init(void)
