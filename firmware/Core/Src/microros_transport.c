@@ -2,23 +2,57 @@
  * @file microros_transport.c
  * @brief USART6 transport for micro-ROS via ESP32-S3 WiFi bridge.
  *
- * USART6 pins (AF8):
- *   PC6 = TX (CN10 pin 4)  → ESP32-S3 GPIO17 (RX)
- *   PC7 = RX (CN10 pin 19) ← ESP32-S3 GPIO18 (TX)
- *   921600 baud
- *
- * ESP32-S3 bridges UART ↔ WiFi UDP to agent at 10.10.8.110:8888.
- * USART2 (PA2/PA3) remains as ST-LINK VCP — completely unchanged.
+ * Uses a circular DMA RX buffer on USART6 so incoming bytes from the
+ * ESP32 bridge are never lost during WiFi round-trip latency (~50ms).
  */
 
 #include "main.h"
 #include <uxr/client/transport.h>
+#include <string.h>
 
 extern UART_HandleTypeDef huart6;
+extern DMA_HandleTypeDef  hdma_usart6_rx;
+
+/* ── Circular DMA RX buffer ──────────────────────────────────── */
+#define RX_BUF_SIZE 512
+static volatile uint8_t rx_buf[RX_BUF_SIZE];
+static volatile uint16_t rx_rd_pos = 0;
+static volatile uint8_t dma_started = 0;
+
+static void start_dma_rx(void)
+{
+    if (!dma_started) {
+        HAL_UART_Receive_DMA(&huart6, (uint8_t *)rx_buf, RX_BUF_SIZE);
+        dma_started = 1;
+    }
+}
+
+static uint16_t dma_write_pos(void)
+{
+    return RX_BUF_SIZE - __HAL_DMA_GET_COUNTER(huart6.hdmarx);
+}
+
+static uint16_t available(void)
+{
+    uint16_t wp = dma_write_pos();
+    uint16_t rp = rx_rd_pos;
+    if (wp >= rp) return wp - rp;
+    return RX_BUF_SIZE - rp + wp;
+}
+
+static uint8_t read_byte(void)
+{
+    uint8_t b = rx_buf[rx_rd_pos];
+    rx_rd_pos = (rx_rd_pos + 1) % RX_BUF_SIZE;
+    return b;
+}
+
+/* ── Transport API ───────────────────────────────────────────── */
 
 bool cubemx_transport_open(struct uxrCustomTransport *transport)
 {
     (void)transport;
+    start_dma_rx();
     return true;
 }
 
@@ -44,10 +78,16 @@ size_t cubemx_transport_read(struct uxrCustomTransport *transport,
                               int timeout_ms, uint8_t *errcode)
 {
     (void)transport;
-    /* The stream framing layer calls read with len=1 to read byte-by-byte.
-     * Use blocking HAL_UART_Receive for the full requested length. */
-    HAL_StatusTypeDef status =
-        HAL_UART_Receive(&huart6, buf, (uint16_t)len, (uint32_t)timeout_ms);
-    *errcode = (status == HAL_OK) ? 0U : 1U;
-    return (status == HAL_OK) ? len : 0;
+    size_t got = 0;
+    uint32_t deadline = HAL_GetTick() + (uint32_t)timeout_ms;
+
+    while (got < len) {
+        if (HAL_GetTick() >= deadline) break;
+        if (available() > 0) {
+            buf[got++] = read_byte();
+        }
+    }
+
+    *errcode = (got > 0) ? 0U : 1U;
+    return got;
 }

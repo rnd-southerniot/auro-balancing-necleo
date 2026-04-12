@@ -68,6 +68,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
          * PC7 = RX (AF8, CN10 pin 19) ← ESP32 GPIO18 (TX) */
         __HAL_RCC_USART6_CLK_ENABLE();
         __HAL_RCC_GPIOC_CLK_ENABLE();
+        __HAL_RCC_DMA2_CLK_ENABLE();
 
         GPIO_InitTypeDef gpio = {0};
         gpio.Pin       = GPIO_PIN_6 | GPIO_PIN_7;
@@ -76,6 +77,20 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
         gpio.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
         gpio.Alternate = GPIO_AF8_USART6;
         HAL_GPIO_Init(GPIOC, &gpio);
+
+        /* USART6 RX DMA: DMA2 Stream1 Channel5 (circular for micro-ROS) */
+        hdma_usart6_rx.Instance                 = DMA2_Stream1;
+        hdma_usart6_rx.Init.Channel             = DMA_CHANNEL_5;
+        hdma_usart6_rx.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+        hdma_usart6_rx.Init.PeriphInc           = DMA_PINC_DISABLE;
+        hdma_usart6_rx.Init.MemInc              = DMA_MINC_ENABLE;
+        hdma_usart6_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+        hdma_usart6_rx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
+        hdma_usart6_rx.Init.Mode                = DMA_CIRCULAR;
+        hdma_usart6_rx.Init.Priority            = DMA_PRIORITY_HIGH;
+        hdma_usart6_rx.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
+        HAL_DMA_Init(&hdma_usart6_rx);
+        __HAL_LINKDMA(huart, hdmarx, hdma_usart6_rx);
     }
 }
 
