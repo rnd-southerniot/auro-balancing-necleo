@@ -39,6 +39,10 @@ extern void *microros_allocate(size_t size, void *state);
 extern void  microros_deallocate(void *pointer, void *state);
 extern void *microros_reallocate(void *pointer, size_t size, void *state);
 extern void *microros_zero_allocate(size_t num, size_t size, void *state);
+
+/* Shared node for all publisher tasks */
+rcl_node_t      g_ros_node;
+volatile uint8_t g_ros_ready = 0U;
 #endif /* MICROROS_ENABLED */
 
 /* ── Heartbeat task ──────────────────────────────────────────── */
@@ -98,32 +102,42 @@ static void microros_task(void *arg)
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
     blink_error(4);  /* 4 blinks = agent connected */
 
-    /* Stage 5: Init micro-ROS */
+    /* Stage 5: Init micro-ROS node (shared with publisher tasks) */
     rcl_allocator_t allocator = rcl_get_default_allocator();
-    rclc_support_t support;
-    rcl_node_t node;
+    static rclc_support_t support;
     rcl_publisher_t pub;
     std_msgs__msg__Int32 msg;
 
     if (rclc_support_init(&support, 0, NULL, &allocator) != RCL_RET_OK) {
         for (;;) blink_error(5);
     }
-    if (rclc_node_init_default(&node, "auro_stm32", "auro", &support) != RCL_RET_OK) {
+    if (rclc_node_init_default(&g_ros_node, "auro_stm32", "auro", &support) != RCL_RET_OK) {
         for (;;) blink_error(6);
     }
-    if (rclc_publisher_init_default(&pub, &node,
+    if (rclc_publisher_init_best_effort(&pub, &g_ros_node,
             ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
             "/auro/heartbeat") != RCL_RET_OK) {
         for (;;) blink_error(7);
     }
-    blink_error(5);  /* 5 blinks = publisher ready */
+
+    /* Signal publisher tasks that node is ready */
+    g_ros_ready = 1U;
+
+    /* Start publisher tasks */
+    extern void ros_imu_task(void *arg);
+    extern void ros_odom_task(void *arg);
+    extern void ros_diag_task(void *arg);
+    xTaskCreate(ros_imu_task,  "imu",  2048, NULL, 3, NULL);
+    xTaskCreate(ros_odom_task, "odom", 2048, NULL, 2, NULL);
+    xTaskCreate(ros_diag_task, "diag", 2048, NULL, 1, NULL);
+
+    blink_error(5);  /* 5 blinks = all publishers ready */
 
     msg.data = 0;
     for (;;) {
         msg.data++;
         rcl_ret_t pub_rc __attribute__((unused)) =
             rcl_publish(&pub, &msg, NULL);
-        /* Solid PB2 = publishing */
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
