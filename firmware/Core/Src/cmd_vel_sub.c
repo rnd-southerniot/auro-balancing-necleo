@@ -24,12 +24,14 @@
 #include "main.h"
 #include "config.h"
 #include "ros_topics.h"
+#include "safety.h"
 
 /* ── Extern globals from main.c ──────────────────────────────── */
 extern volatile float       g_diff_linear;
 extern volatile float       g_diff_angular;
 extern volatile ControlMode_t g_mode;
 extern volatile ControlMode_t g_mode_b;
+extern volatile uint32_t      g_last_cmd_ms;
 
 /* ── Extern micro-ROS node (from freertos_app.c) ─────────────── */
 extern rcl_node_t       g_ros_node;
@@ -64,8 +66,12 @@ static void cmd_vel_cb(const void *msg)
     g_diff_linear  = lin;
     g_diff_angular = ang;
 
+    /* Feed safety watchdog — prevents FAULT_COMMS_LOSS */
+    g_last_cmd_ms = HAL_GetTick();
+
     /* Enter differential drive mode if not already */
     if (g_mode != CTRL_DIFF || g_mode_b != CTRL_DIFF) {
+        Safety_ClearFaults();  /* clear any latched comms_loss */
         g_mode   = CTRL_DIFF;
         g_mode_b = CTRL_DIFF;
     }
@@ -73,23 +79,15 @@ static void cmd_vel_cb(const void *msg)
     last_cmd_tick = HAL_GetTick();
 }
 
-/* ── Task ────────────────────────────────────────────────────── */
-void cmd_vel_task(void *arg)
+/* ── Init (call once from microros_task after node ready) ─────── */
+void cmd_vel_init(void)
 {
-    (void)arg;
-
-    while (!g_ros_ready) vTaskDelay(pdMS_TO_TICKS(10));
-
     rcl_allocator_t alloc = rcl_get_default_allocator();
 
-    rcl_ret_t rc = rclc_subscription_init_best_effort(
+    rclc_subscription_init_best_effort(
         &cmd_vel_sub, &g_ros_node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
         "/cmd_vel");
-    if (rc != RCL_RET_OK) {
-        for (;;) { HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_2);
-                   vTaskDelay(pdMS_TO_TICKS(200)); }
-    }
 
     extern rclc_support_t g_ros_support;
     rclc_executor_init(&cmd_vel_exec,
@@ -99,20 +97,17 @@ void cmd_vel_task(void *arg)
         cmd_vel_cb, ON_NEW_DATA);
 
     last_cmd_tick = HAL_GetTick();
+}
 
-    for (;;) {
-        rclc_executor_spin_some(&cmd_vel_exec, RCL_MS_TO_NS(10));
+/* ── Spin (call from microros_task main loop at 100Hz) ─────── */
+void cmd_vel_spin(void)
+{
+    rclc_executor_spin_some(&cmd_vel_exec, RCL_MS_TO_NS(10));
 
-        /* Watchdog: stop if no cmd_vel received recently */
-        if ((HAL_GetTick() - last_cmd_tick) > CMD_VEL_TIMEOUT) {
-            if (g_mode == CTRL_DIFF) {
-                g_diff_linear  = 0.0f;
-                g_diff_angular = 0.0f;
-                g_mode   = CTRL_IDLE;
-                g_mode_b = CTRL_IDLE;
-            }
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(10));  /* 100Hz spin */
+    /* Watchdog: zero velocity if no cmd_vel recently */
+    if ((HAL_GetTick() - last_cmd_tick) > CMD_VEL_TIMEOUT) {
+        g_diff_linear  = 0.0f;
+        g_diff_angular = 0.0f;
+        g_last_cmd_ms = HAL_GetTick();
     }
 }

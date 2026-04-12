@@ -347,7 +347,10 @@ static void App_ControlTick(void)
     Odometry_Update(g_enc_a.delta, g_enc_b.delta, PID_DT_S);
 
     /* 3. Safety check — pass 0 for last_cmd_ms during autotune to skip COMMS watchdog */
-    uint32_t cmd_ts = (g_mode == CTRL_AUTOTUNE) ? 0U : g_last_cmd_ms;
+    /* Skip comms watchdog in AUTOTUNE and DIFF modes — those have
+     * their own timeout logic (autotune relay, cmd_vel 500ms watchdog) */
+    uint32_t cmd_ts = (g_mode == CTRL_AUTOTUNE || g_mode == CTRL_DIFF)
+                      ? 0U : g_last_cmd_ms;
     Safety_Tick(rpm, current_ma, batt_v, g_applied_duty,
                 cmd_ts, now);
 
@@ -374,10 +377,11 @@ static void App_ControlTick(void)
             rpm_r *= s;
         }
 
-        /* Motor A = left, Motor B = right */
+        /* Both motors face backward on chassis — negate both.
+         * Motor B is also mirrored — negate again (net: no negate for B). */
         g_pid_rpm.enabled = 1U;
         g_pid_rpm_b.enabled = 1U;
-        PID_SetSetpoint(&g_pid_rpm, rpm_l);
+        PID_SetSetpoint(&g_pid_rpm, -rpm_l);
         PID_SetSetpoint(&g_pid_rpm_b, rpm_r);
 
         float out_a = PID_Compute(&g_pid_rpm, rpm, PID_DT_S);

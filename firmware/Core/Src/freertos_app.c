@@ -131,17 +131,29 @@ static void microros_task(void *arg)
     xTaskCreate(ros_imu_task,  "imu",    1536, NULL, 3, NULL);
     xTaskCreate(ros_odom_task, "odom",   1536, NULL, 2, NULL);
     xTaskCreate(ros_diag_task, "diag",   1024, NULL, 1, NULL);
-    xTaskCreate(cmd_vel_task,  "cmdvel", 1536, NULL, 3, NULL);
+    /* cmd_vel runs in THIS task — must share transport context */
+    extern void cmd_vel_init(void);
+    extern void cmd_vel_spin(void);
+    cmd_vel_init();
 
     blink_error(5);  /* 5 blinks = all publishers ready */
 
     msg.data = 0;
+    uint32_t hb_next = HAL_GetTick() + 1000U;
     for (;;) {
-        msg.data++;
-        rcl_ret_t pub_rc __attribute__((unused)) =
-            rcl_publish(&pub, &msg, NULL);
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        /* Spin cmd_vel executor — processes incoming /cmd_vel */
+        cmd_vel_spin();
+
+        /* Heartbeat at 1Hz */
+        if (HAL_GetTick() >= hb_next) {
+            hb_next = HAL_GetTick() + 1000U;
+            msg.data++;
+            rcl_ret_t pub_rc __attribute__((unused)) =
+                rcl_publish(&pub, &msg, NULL);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(10));  /* 100Hz spin rate */
     }
 }
 #endif /* MICROROS_ENABLED */
