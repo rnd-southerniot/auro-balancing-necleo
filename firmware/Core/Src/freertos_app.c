@@ -21,6 +21,9 @@
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
 #include <std_msgs/msg/int32.h>
+#include <std_msgs/msg/string.h>
+#include <sensor_msgs/msg/imu.h>
+#include <nav_msgs/msg/odometry.h>
 #include <rmw_microros/rmw_microros.h>
 #include <rmw/ret_types.h>
 
@@ -44,6 +47,13 @@ extern void *microros_zero_allocate(size_t num, size_t size, void *state);
 rcl_node_t       g_ros_node;
 rclc_support_t   g_ros_support;
 volatile uint8_t g_ros_ready = 0U;
+
+/* Publishers created in microros_task, used by sensor tasks.
+ * XRCE-DDS client is NOT thread-safe — all entity creation
+ * MUST happen in a single task to avoid transport corruption. */
+rcl_publisher_t  g_imu_pub;
+rcl_publisher_t  g_odom_pub;
+rcl_publisher_t  g_diag_pub;
 #endif /* MICROROS_ENABLED */
 
 /* ── Heartbeat task ──────────────────────────────────────────── */
@@ -121,20 +131,41 @@ static void microros_task(void *arg)
         for (;;) blink_error(7);
     }
 
-    /* Signal publisher tasks that node is ready */
+    /* Create ALL publishers here in microros_task — XRCE-DDS client
+     * is NOT thread-safe.  Concurrent entity creation from multiple
+     * FreeRTOS tasks corrupts the transport buffer, causing agent
+     * deserialization errors and failed session setup. */
+    if (rclc_publisher_init_best_effort(&g_imu_pub, &g_ros_node,
+            ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
+            "/auro/imu/data") != RCL_RET_OK) {
+        for (;;) blink_error(7);
+    }
+    if (rclc_publisher_init_best_effort(&g_odom_pub, &g_ros_node,
+            ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
+            "/auro/odom") != RCL_RET_OK) {
+        for (;;) blink_error(7);
+    }
+    if (rclc_publisher_init_best_effort(&g_diag_pub, &g_ros_node,
+            ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
+            "/auro/diagnostics") != RCL_RET_OK) {
+        for (;;) blink_error(7);
+    }
+
+    /* cmd_vel subscriber — runs in THIS task, shares transport context */
+    extern void cmd_vel_init(void);
+    extern void cmd_vel_spin(void);
+    cmd_vel_init();
+
+    /* All XRCE-DDS entities created in single thread — safe to start
+     * sensor tasks now.  They use pre-created global publishers. */
     g_ros_ready = 1U;
 
     extern void ros_imu_task(void *arg);
     extern void ros_odom_task(void *arg);
     extern void ros_diag_task(void *arg);
-    extern void cmd_vel_task(void *arg);
     xTaskCreate(ros_imu_task,  "imu",    1536, NULL, 3, NULL);
     xTaskCreate(ros_odom_task, "odom",   1536, NULL, 2, NULL);
     xTaskCreate(ros_diag_task, "diag",   1024, NULL, 1, NULL);
-    /* cmd_vel runs in THIS task — must share transport context */
-    extern void cmd_vel_init(void);
-    extern void cmd_vel_spin(void);
-    cmd_vel_init();
 
     blink_error(5);  /* 5 blinks = all publishers ready */
 
