@@ -23,6 +23,7 @@ uint8_t uart_buf[4096];
 uint8_t udp_buf[4096];
 uint8_t frame_buf[4096];
 int     frame_pos = 0;
+bool    hdlc_escape = false;  /* HDLC byte-unstuffing state */
 
 /* CRC16-MODBUS (poly 0x8005, reflected, init 0x0000) — matches uxr_update_crc */
 static const uint16_t crc16_tab[] = {
@@ -92,13 +93,15 @@ void setup() {
 }
 
 void loop() {
-    /* ── UART → UDP: strip HDLC, forward raw XRCE-DDS ────────────── */
+    /* ── UART → UDP: strip HDLC + un-stuff, forward raw XRCE-DDS ─── */
     while (Serial1.available()) {
         uint8_t b = Serial1.read();
 
         if (b == 0x7E) {
+            /* Frame delimiter — process accumulated frame */
+            hdlc_escape = false;
             if (frame_pos >= 7) {
-                /* Frame: [src][dst][len_lo][len_hi][payload...][crc_lo][crc_hi] */
+                /* frame_buf (un-stuffed): [src][dst][len_lo][len_hi][payload...][crc_lo][crc_hi] */
                 int xrce_len = frame_pos - 4 - 2;
                 if (xrce_len > 0) {
                     udp.beginPacket(AGENT_IP, AGENT_PORT);
@@ -109,30 +112,55 @@ void loop() {
             frame_pos = 0;
             continue;
         }
+
+        /* HDLC byte un-stuffing: 0x7D 0x5E → 0x7E, 0x7D 0x5D → 0x7D */
+        if (b == 0x7D) {
+            hdlc_escape = true;
+            continue;  /* consume escape flag, don't store */
+        }
+        if (hdlc_escape) {
+            b ^= 0x20;  /* un-stuff: XOR with 0x20 restores original byte */
+            hdlc_escape = false;
+        }
+
         if (frame_pos < (int)sizeof(frame_buf))
             frame_buf[frame_pos++] = b;
     }
 
-    /* ── UDP → UART: wrap raw XRCE-DDS in HDLC ────────────────────── */
+    /* ── UDP → UART: wrap raw XRCE-DDS in HDLC with byte-stuffing ── */
     int p = udp.parsePacket();
     if (p > 0) {
         int r = udp.read(udp_buf, sizeof(udp_buf));
         if (r > 0) {
-            Serial.printf("UDP RX: %d bytes -> UART\n", r);
-            /* HDLC: [0x7E][src=0][dst=0][len_lo][len_hi][payload][crc_lo][crc_hi] */
-            uint8_t hdr[5] = {0x7E, 0x00, 0x00,
-                              (uint8_t)(r & 0xFF),
-                              (uint8_t)((r >> 8) & 0xFF)};
+            /* HDLC: [0x7E][stuffed: src dst len_lo len_hi payload crc_lo crc_hi] */
+            uint16_t crc = crc16_compute(udp_buf, r);
 
-            /* CRC over: payload only (length NOT included) */
-            uint16_t crc = 0;
-            for (int i = 0; i < r; i++)
-                crc = crc16_update(crc, udp_buf[i]);
+            /* Build raw (un-stuffed) frame body: hdr + payload + crc */
+            uint8_t raw[4 + 4096 + 2];
+            raw[0] = 0x00;                        /* src */
+            raw[1] = 0x00;                        /* dst */
+            raw[2] = (uint8_t)(r & 0xFF);         /* len_lo */
+            raw[3] = (uint8_t)((r >> 8) & 0xFF);  /* len_hi */
+            memcpy(&raw[4], udp_buf, r);
+            raw[4 + r]     = (uint8_t)(crc & 0xFF);
+            raw[4 + r + 1] = (uint8_t)((crc >> 8) & 0xFF);
+            int raw_len = 4 + r + 2;
 
-            Serial1.write(hdr, 5);
-            Serial1.write(udp_buf, r);
-            uint8_t crc_bytes[2] = {(uint8_t)(crc & 0xFF), (uint8_t)((crc >> 8) & 0xFF)};
-            Serial1.write(crc_bytes, 2);
+            /* Write start flag (not stuffed) */
+            Serial1.write((uint8_t)0x7E);
+
+            /* Write body with byte-stuffing */
+            for (int i = 0; i < raw_len; i++) {
+                if (raw[i] == 0x7E) {
+                    Serial1.write((uint8_t)0x7D);
+                    Serial1.write((uint8_t)0x5E);
+                } else if (raw[i] == 0x7D) {
+                    Serial1.write((uint8_t)0x7D);
+                    Serial1.write((uint8_t)0x5D);
+                } else {
+                    Serial1.write(raw[i]);
+                }
+            }
         }
     }
 }
