@@ -1,6 +1,6 @@
 /**
  * @file ros_publishers.c
- * @brief ROS2 publisher tasks: IMU (200Hz), odometry (50Hz), diagnostics (1Hz).
+ * @brief ROS2 publisher tasks: IMU (50Hz), odometry (50Hz), diagnostics (1Hz).
  *
  * Reads existing global state (g_imu, g_pose, g_adc_dma_buf) — does NOT
  * call any driver functions directly. All sensor reads happen in TIM10 ISR.
@@ -29,27 +29,23 @@
 /* ── Shared micro-ROS objects (owned by microros_task in freertos_app.c) ── */
 extern rcl_node_t      g_ros_node;
 extern volatile uint8_t g_ros_ready;
+extern rcl_publisher_t  g_imu_pub;
+extern rcl_publisher_t  g_odom_pub;
+extern rcl_publisher_t  g_diag_pub;
 
 /* ── Conversions ─────────────────────────────────────────────── */
 #define DPS_TO_RADS  0.017453293f
 #define G_TO_MS2     9.80665f
 
-/* ── IMU task: publish /auro/imu/data at 200Hz ───────────────── */
+/* ── IMU task: publish /auro/imu/data at 50Hz ────────────────── */
 
 void ros_imu_task(void *arg)
 {
     (void)arg;
     while (!g_ros_ready) vTaskDelay(pdMS_TO_TICKS(10));
 
-    rcl_publisher_t pub;
     sensor_msgs__msg__Imu msg;
     memset(&msg, 0, sizeof(msg));
-
-    rcl_ret_t rc = rclc_publisher_init_best_effort(
-        &pub, &g_ros_node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
-        TOPIC_IMU);
-    if (rc != RCL_RET_OK) { for (;;) vTaskDelay(pdMS_TO_TICKS(1000)); }
 
     /* Static frame ID */
     static char frame[] = FRAME_IMU;
@@ -90,8 +86,8 @@ void ros_imu_task(void *arg)
         msg.orientation.y = (double)sp;
         msg.orientation.z = 0.0;
 
-        (void)!rcl_publish(&pub, &msg, NULL);
-        vTaskDelayUntil(&last, pdMS_TO_TICKS(5)); /* 200Hz */
+        (void)!rcl_publish(&g_imu_pub, &msg, NULL);
+        vTaskDelayUntil(&last, pdMS_TO_TICKS(20)); /* 50Hz */
     }
 }
 
@@ -102,15 +98,8 @@ void ros_odom_task(void *arg)
     (void)arg;
     while (!g_ros_ready) vTaskDelay(pdMS_TO_TICKS(10));
 
-    rcl_publisher_t pub;
     nav_msgs__msg__Odometry msg;
     memset(&msg, 0, sizeof(msg));
-
-    rcl_ret_t rc = rclc_publisher_init_best_effort(
-        &pub, &g_ros_node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
-        TOPIC_ODOM);
-    if (rc != RCL_RET_OK) { for (;;) vTaskDelay(pdMS_TO_TICKS(1000)); }
 
     static char frame_odom[] = FRAME_ODOM;
     static char frame_base[] = FRAME_BASE;
@@ -149,7 +138,7 @@ void ros_odom_task(void *arg)
         msg.twist.twist.linear.x  = (double)p.v_m_s;
         msg.twist.twist.angular.z = (double)p.w_rad_s;
 
-        (void)!rcl_publish(&pub, &msg, NULL);
+        (void)!rcl_publish(&g_odom_pub, &msg, NULL);
         vTaskDelayUntil(&last, pdMS_TO_TICKS(20)); /* 50Hz */
     }
 }
@@ -161,15 +150,8 @@ void ros_diag_task(void *arg)
     (void)arg;
     while (!g_ros_ready) vTaskDelay(pdMS_TO_TICKS(10));
 
-    rcl_publisher_t pub;
     std_msgs__msg__String msg;
     memset(&msg, 0, sizeof(msg));
-
-    rcl_ret_t rc = rclc_publisher_init_best_effort(
-        &pub, &g_ros_node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
-        TOPIC_DIAGNOSTICS);
-    if (rc != RCL_RET_OK) { for (;;) vTaskDelay(pdMS_TO_TICKS(1000)); }
 
     /* Use a simple string message for diagnostics — avoids complex
      * DiagnosticArray allocation issues on constrained SRAM. */
@@ -189,7 +171,7 @@ void ros_diag_task(void *arg)
             g_imu.initialized ? "ok" : "fail");
         msg.data.size = (size_t)(len > 0 ? len : 0);
 
-        (void)!rcl_publish(&pub, &msg, NULL);
+        (void)!rcl_publish(&g_diag_pub, &msg, NULL);
         vTaskDelayUntil(&last, pdMS_TO_TICKS(1000)); /* 1Hz */
     }
 }
