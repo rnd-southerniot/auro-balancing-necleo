@@ -2,9 +2,6 @@
 // with input from example_interfaces:msg/Byte.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "example_interfaces/msg/byte.h"
-
-
 #ifndef EXAMPLE_INTERFACES__MSG__DETAIL__BYTE__STRUCT_H_
 #define EXAMPLE_INTERFACES__MSG__DETAIL__BYTE__STRUCT_H_
 
@@ -16,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 
 // Constants defined in the message
 

@@ -21,8 +21,6 @@
 #include <limits>
 #include <memory>
 #include <vector>
-#include <utility>
-#include <string>
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
@@ -38,27 +36,7 @@
 #include "test_msgs/msg/unbounded_sequences.hpp"
 #include "test_msgs/msg/w_strings.hpp"
 
-static inline std::string
-from_u8string(const std::string & s)
-{
-  return s;
-}
-
-static inline std::string
-from_u8string(std::string && s)
-{
-  return std::move(s);
-}
-
-#if defined(__cpp_lib_char8_t)
-static inline std::string
-from_u8string(const std::u8string & s)
-{
-  return std::string(s.begin(), s.end());
-}
-#endif
-
-static inline std::vector<test_msgs::msg::Empty::SharedPtr>
+std::vector<test_msgs::msg::Empty::SharedPtr>
 get_messages_empty()
 {
   std::vector<test_msgs::msg::Empty::SharedPtr> messages;
@@ -67,7 +45,7 @@ get_messages_empty()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::BasicTypes::SharedPtr>
+std::vector<test_msgs::msg::BasicTypes::SharedPtr>
 get_messages_basic_types()
 {
   std::vector<test_msgs::msg::BasicTypes::SharedPtr> messages;
@@ -142,7 +120,7 @@ get_messages_basic_types()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::Constants::SharedPtr>
+std::vector<test_msgs::msg::Constants::SharedPtr>
 get_messages_constants()
 {
   std::vector<test_msgs::msg::Constants::SharedPtr> messages;
@@ -153,7 +131,7 @@ get_messages_constants()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::Defaults::SharedPtr>
+std::vector<test_msgs::msg::Defaults::SharedPtr>
 get_messages_defaults()
 {
   std::vector<test_msgs::msg::Defaults::SharedPtr> messages;
@@ -164,7 +142,7 @@ get_messages_defaults()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::Strings::SharedPtr>
+std::vector<test_msgs::msg::Strings::SharedPtr>
 get_messages_strings()
 {
   std::vector<test_msgs::msg::Strings::SharedPtr> messages;
@@ -182,8 +160,8 @@ get_messages_strings()
   }
   {
     auto msg = std::make_shared<test_msgs::msg::Strings>();
-    msg->string_value = from_u8string(u8"Hell\u00F6 W\u00F6rld!");  // using umlaut
-    msg->bounded_string_value = from_u8string(u8"Hell\u00F6 W\u00F6rld!");  // using umlaut
+    msg->string_value = u8"Hell\u00F6 W\u00F6rld!";  // using umlaut
+    msg->bounded_string_value = u8"Hell\u00F6 W\u00F6rld!";  // using umlaut
     messages.push_back(msg);
   }
   {
@@ -201,7 +179,7 @@ get_messages_strings()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::Arrays::SharedPtr>
+std::vector<test_msgs::msg::Arrays::SharedPtr>
 get_messages_arrays()
 {
   auto basic_types_msgs = get_messages_basic_types();
@@ -238,7 +216,7 @@ get_messages_arrays()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::UnboundedSequences::SharedPtr>
+std::vector<test_msgs::msg::UnboundedSequences::SharedPtr>
 get_messages_unbounded_sequences()
 {
   auto basic_types_msgs = get_messages_basic_types();
@@ -364,7 +342,7 @@ get_messages_unbounded_sequences()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::BoundedPlainSequences::SharedPtr>
+std::vector<test_msgs::msg::BoundedPlainSequences::SharedPtr>
 get_messages_bounded_plain_sequences()
 {
   auto basic_types_msgs = get_messages_basic_types();
@@ -411,7 +389,7 @@ get_messages_bounded_plain_sequences()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::BoundedSequences::SharedPtr>
+std::vector<test_msgs::msg::BoundedSequences::SharedPtr>
 get_messages_bounded_sequences()
 {
   auto basic_types_msgs = get_messages_basic_types();
@@ -459,7 +437,7 @@ get_messages_bounded_sequences()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::MultiNested::SharedPtr>
+std::vector<test_msgs::msg::MultiNested::SharedPtr>
 get_messages_multi_nested()
 {
   auto arrays_msgs = get_messages_arrays();
@@ -514,7 +492,7 @@ get_messages_multi_nested()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::Nested::SharedPtr>
+std::vector<test_msgs::msg::Nested::SharedPtr>
 get_messages_nested()
 {
   std::vector<test_msgs::msg::Nested::SharedPtr> messages;
@@ -527,7 +505,7 @@ get_messages_nested()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::Builtins::SharedPtr>
+std::vector<test_msgs::msg::Builtins::SharedPtr>
 get_messages_builtins()
 {
   std::vector<test_msgs::msg::Builtins::SharedPtr> messages;
@@ -542,7 +520,7 @@ get_messages_builtins()
   return messages;
 }
 
-static inline std::vector<test_msgs::msg::WStrings::SharedPtr>
+std::vector<test_msgs::msg::WStrings::SharedPtr>
 get_messages_wstrings()
 {
   std::vector<test_msgs::msg::WStrings::SharedPtr> messages;

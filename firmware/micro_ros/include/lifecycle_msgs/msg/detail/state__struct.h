@@ -2,9 +2,6 @@
 // with input from lifecycle_msgs:msg/State.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "lifecycle_msgs/msg/state.h"
-
-
 #ifndef LIFECYCLE_MSGS__MSG__DETAIL__STATE__STRUCT_H_
 #define LIFECYCLE_MSGS__MSG__DETAIL__STATE__STRUCT_H_
 
@@ -16,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 
 // Constants defined in the message
 

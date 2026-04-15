@@ -2,9 +2,6 @@
 // with input from rosgraph_msgs:msg/Clock.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "rosgraph_msgs/msg/clock.h"
-
-
 #ifndef ROSGRAPH_MSGS__MSG__DETAIL__CLOCK__STRUCT_H_
 #define ROSGRAPH_MSGS__MSG__DETAIL__CLOCK__STRUCT_H_
 
@@ -16,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 
 // Constants defined in the message
 

@@ -2,9 +2,6 @@
 // with input from geometry_msgs:msg/PolygonInstanceStamped.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "geometry_msgs/msg/polygon_instance_stamped.h"
-
-
 #ifndef GEOMETRY_MSGS__MSG__DETAIL__POLYGON_INSTANCE_STAMPED__TYPE_SUPPORT_H_
 #define GEOMETRY_MSGS__MSG__DETAIL__POLYGON_INSTANCE_STAMPED__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   geometry_msgs,
   msg,
   PolygonInstanceStamped
-)(void);
+)();
 
 #ifdef __cplusplus
 }

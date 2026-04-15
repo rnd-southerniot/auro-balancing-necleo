@@ -2,9 +2,6 @@
 // with input from sensor_msgs:msg/Range.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "sensor_msgs/msg/range.h"
-
-
 #ifndef SENSOR_MSGS__MSG__DETAIL__RANGE__STRUCT_H_
 #define SENSOR_MSGS__MSG__DETAIL__RANGE__STRUCT_H_
 
@@ -16,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 
 // Constants defined in the message
 
@@ -79,9 +77,6 @@ typedef struct sensor_msgs__msg__Range
   /// +Inf represents no detection within the fixed distance.
   /// (Object out of range)
   float range;
-  /// variance of the range sensor
-  /// 0 is interpreted as variance unknown
-  float variance;
 } sensor_msgs__msg__Range;
 
 // Struct for a sequence of sensor_msgs__msg__Range.

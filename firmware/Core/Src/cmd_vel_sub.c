@@ -25,6 +25,7 @@
 #include "config.h"
 #include "ros_topics.h"
 #include "safety.h"
+#include "rgb_led.h"
 
 /* ── Extern globals from main.c ──────────────────────────────── */
 extern volatile float       g_diff_linear;
@@ -40,7 +41,7 @@ extern volatile uint8_t  g_ros_ready;
 /* ── Velocity limits (m/s and rad/s → normalized -1..+1) ─────── */
 #define MAX_LINEAR_VEL   0.5f   /* m/s at which g_diff_linear = 1.0 */
 #define MAX_ANGULAR_VEL  3.0f   /* rad/s at which g_diff_angular = 1.0 */
-#define CMD_VEL_TIMEOUT  500U   /* ms — stop motors if no msg */
+#define CMD_VEL_TIMEOUT  500U   /* ms — stop motors 500ms after last cmd_vel */
 
 /* ── State ───────────────────────────────────────────────────── */
 static rcl_subscription_t         cmd_vel_sub;
@@ -60,29 +61,23 @@ static void cmd_vel_cb(const void *msg)
     const geometry_msgs__msg__Twist *t =
         (const geometry_msgs__msg__Twist *)msg;
 
-    float lin = clampf((float)t->linear.x  / MAX_LINEAR_VEL,  -1.0f, 1.0f);
-    float ang = clampf((float)t->angular.z / MAX_ANGULAR_VEL, -1.0f, 1.0f);
+    g_diff_linear  = clampf((float)t->linear.x  / MAX_LINEAR_VEL,  -1.0f, 1.0f);
+    g_diff_angular = clampf((float)t->angular.z / MAX_ANGULAR_VEL, -1.0f, 1.0f);
 
-    g_diff_linear  = lin;
-    g_diff_angular = ang;
-
-    /* Feed safety watchdog — prevents FAULT_COMMS_LOSS */
+    Safety_ClearFaults();
+    g_mode       = CTRL_DIFF;
+    g_mode_b     = CTRL_DIFF;
     g_last_cmd_ms = HAL_GetTick();
+    last_cmd_tick = HAL_GetTick();   /* MUST update — prevents watchdog zero */
 
-    /* Enter differential drive mode if not already */
-    if (g_mode != CTRL_DIFF || g_mode_b != CTRL_DIFF) {
-        Safety_ClearFaults();  /* clear any latched comms_loss */
-        g_mode   = CTRL_DIFF;
-        g_mode_b = CTRL_DIFF;
-    }
-
-    last_cmd_tick = HAL_GetTick();
+    RGB_SetState(RGB_GREEN_SOLID);
 }
 
 /* ── Init (call once from microros_task after node ready) ─────── */
 void cmd_vel_init(void)
 {
-    rcl_allocator_t alloc = rcl_get_default_allocator();
+    static rcl_allocator_t alloc;
+    alloc = rcl_get_default_allocator();
 
     rclc_subscription_init_best_effort(
         &cmd_vel_sub, &g_ros_node,
@@ -102,12 +97,16 @@ void cmd_vel_init(void)
 /* ── Spin (call from microros_task main loop at 100Hz) ─────── */
 void cmd_vel_spin(void)
 {
-    rclc_executor_spin_some(&cmd_vel_exec, RCL_MS_TO_NS(10));
+    rclc_executor_spin_some(&cmd_vel_exec, 0);
 
-    /* Watchdog: zero velocity if no cmd_vel recently */
+    /* Watchdog: idle motors if no cmd_vel recently */
     if ((HAL_GetTick() - last_cmd_tick) > CMD_VEL_TIMEOUT) {
         g_diff_linear  = 0.0f;
         g_diff_angular = 0.0f;
-        g_last_cmd_ms = HAL_GetTick();
+        g_mode         = CTRL_IDLE;
+        g_mode_b       = CTRL_IDLE;
+        g_last_cmd_ms  = HAL_GetTick();
+        if (RGB_GetState() == RGB_GREEN_SOLID)
+            RGB_SetState(RGB_GREEN_BLINK);
     }
 }

@@ -2,9 +2,6 @@
 // with input from action_msgs:msg/GoalStatusArray.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "action_msgs/msg/goal_status_array.h"
-
-
 #ifndef ACTION_MSGS__MSG__DETAIL__GOAL_STATUS_ARRAY__TYPE_SUPPORT_H_
 #define ACTION_MSGS__MSG__DETAIL__GOAL_STATUS_ARRAY__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   action_msgs,
   msg,
   GoalStatusArray
-)(void);
+)();
 
 #ifdef __cplusplus
 }

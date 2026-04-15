@@ -2,9 +2,6 @@
 // with input from std_msgs:msg/Int8MultiArray.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "std_msgs/msg/int8_multi_array.h"
-
-
 #ifndef STD_MSGS__MSG__DETAIL__INT8_MULTI_ARRAY__STRUCT_H_
 #define STD_MSGS__MSG__DETAIL__INT8_MULTI_ARRAY__STRUCT_H_
 
@@ -16,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 
 // Constants defined in the message
 

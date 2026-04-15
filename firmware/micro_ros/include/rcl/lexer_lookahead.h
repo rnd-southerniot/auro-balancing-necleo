@@ -56,7 +56,7 @@ typedef struct rcl_lexer_lookahead2_s
 RCL_PUBLIC
 RCL_WARN_UNUSED
 rcl_lexer_lookahead2_t
-rcl_get_zero_initialized_lexer_lookahead2(void);
+rcl_get_zero_initialized_lexer_lookahead2();
 
 /// Initialize an rcl_lexer_lookahead2_t instance.
 /**

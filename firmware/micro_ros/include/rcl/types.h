@@ -18,7 +18,6 @@
 #define RCL__TYPES_H_
 
 #include <rmw/types.h>
-#include <rcutils/types.h>
 
 /// The type that holds an rcl return code.
 typedef rmw_ret_t rcl_ret_t;
@@ -51,8 +50,6 @@ typedef rmw_ret_t rcl_ret_t;
 #define RCL_RET_UNKNOWN_SUBSTITUTION 105
 /// rcl_shutdown() already called return code.
 #define RCL_RET_ALREADY_SHUTDOWN 106
-/// Resource not found
-#define RCL_RET_NOT_FOUND 107
 
 // rcl node specific ret codes in 2XX
 /// Invalid rcl_node_t given return code.
@@ -125,10 +122,6 @@ typedef rmw_ret_t rcl_ret_t;
 #define RCL_RET_LIFECYCLE_STATE_REGISTERED 3000
 /// rcl_lifecycle state not registered
 #define RCL_RET_LIFECYCLE_STATE_NOT_REGISTERED 3001
-
-// rcl action specific ret codes in 40XX
-/// No terminal timestamp for the goal as it has not reached a terminal state.
-#define RCL_ACTION_RET_NOT_TERMINATED_YET 4001
 
 /// typedef for rmw_serialized_message_t;
 typedef rmw_serialized_message_t rcl_serialized_message_t;

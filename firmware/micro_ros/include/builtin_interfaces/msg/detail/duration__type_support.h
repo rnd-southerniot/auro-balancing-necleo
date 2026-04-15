@@ -2,9 +2,6 @@
 // with input from builtin_interfaces:msg/Duration.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "builtin_interfaces/msg/duration.h"
-
-
 #ifndef BUILTIN_INTERFACES__MSG__DETAIL__DURATION__TYPE_SUPPORT_H_
 #define BUILTIN_INTERFACES__MSG__DETAIL__DURATION__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   builtin_interfaces,
   msg,
   Duration
-)(void);
+)();
 
 #ifdef __cplusplus
 }

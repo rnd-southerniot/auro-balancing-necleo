@@ -2,9 +2,6 @@
 // with input from geometry_msgs:msg/TwistWithCovariance.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "geometry_msgs/msg/twist_with_covariance.h"
-
-
 #ifndef GEOMETRY_MSGS__MSG__DETAIL__TWIST_WITH_COVARIANCE__TYPE_SUPPORT_H_
 #define GEOMETRY_MSGS__MSG__DETAIL__TWIST_WITH_COVARIANCE__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   geometry_msgs,
   msg,
   TwistWithCovariance
-)(void);
+)();
 
 #ifdef __cplusplus
 }

@@ -2,9 +2,6 @@
 // with input from example_interfaces:msg/Byte.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "example_interfaces/msg/byte.h"
-
-
 #ifndef EXAMPLE_INTERFACES__MSG__DETAIL__BYTE__TYPE_SUPPORT_H_
 #define EXAMPLE_INTERFACES__MSG__DETAIL__BYTE__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   example_interfaces,
   msg,
   Byte
-)(void);
+)();
 
 #ifdef __cplusplus
 }
