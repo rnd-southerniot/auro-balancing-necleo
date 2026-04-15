@@ -15,6 +15,7 @@
 #include "main.h"
 #include "config.h"
 #include "rgb_led.h"
+#include "balance.h"
 
 volatile uint32_t g_stack_hwm = 0xFFFF;
 
@@ -101,6 +102,8 @@ static void microros_task(void *arg)
     }
     vTaskDelay(pdMS_TO_TICKS(500));  /* transport OK */
 
+    Balance_Init();
+
     /* Stage 4: Wait for agent — RGB blue blink */
     RGB_SetState(RGB_BLUE_BLINK);
     while (rmw_uros_ping_agent(1000, 5) != RCL_RET_OK) {
@@ -185,6 +188,7 @@ static void microros_task(void *arg)
     uint32_t odom_next = imu_next;
     uint32_t diag_next = imu_next;
     uint32_t hb_next   = imu_next;
+    uint32_t bal_next  = imu_next;
 
     for (;;) {
         uint32_t now = HAL_GetTick();
@@ -199,6 +203,17 @@ static void microros_task(void *arg)
             ros_imu_fill(&imu_msg);
             (void)!rcl_publish(&g_imu_pub, &imu_msg, NULL);
         }
+        /* Balance controller tick at 50Hz (aligned with IMU rate) */
+        if (now >= bal_next) {
+            bal_next = now + 20U;
+            if (Balance_IsOn()) {
+                if (!Balance_Tick()) {
+                    Balance_Disable();  /* fall detected */
+                    RGB_SetState(RGB_RED_SOLID);
+                }
+            }
+        }
+
         if (now >= odom_next) {
             odom_next = now + 20U;  /* 50Hz */
             extern void ros_odom_fill(nav_msgs__msg__Odometry *m);
