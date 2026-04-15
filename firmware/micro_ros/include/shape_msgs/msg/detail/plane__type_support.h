@@ -2,9 +2,6 @@
 // with input from shape_msgs:msg/Plane.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "shape_msgs/msg/plane.h"
-
-
 #ifndef SHAPE_MSGS__MSG__DETAIL__PLANE__TYPE_SUPPORT_H_
 #define SHAPE_MSGS__MSG__DETAIL__PLANE__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   shape_msgs,
   msg,
   Plane
-)(void);
+)();
 
 #ifdef __cplusplus
 }

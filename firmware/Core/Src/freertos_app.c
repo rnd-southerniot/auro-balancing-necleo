@@ -14,6 +14,9 @@
 #include "task.h"
 #include "main.h"
 #include "config.h"
+#include "rgb_led.h"
+
+volatile uint32_t g_stack_hwm = 0xFFFF;
 
 #if defined(MICROROS_ENABLED)
 #include <rcl/rcl.h>
@@ -72,25 +75,18 @@ static void heartbeat_task(void *arg)
 
 #if defined(MICROROS_ENABLED)
 
-/* Blink fault LED (PB2) N times to indicate error stage */
-static void blink_error(uint8_t n)
-{
-    for (uint8_t i = 0; i < n; i++) {
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
-        vTaskDelay(pdMS_TO_TICKS(200));
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
-        vTaskDelay(pdMS_TO_TICKS(200));
-    }
-    vTaskDelay(pdMS_TO_TICKS(1000));
-}
+/* blink_error removed — PB2 now driven by RGB LED driver.
+ * Error stages shown via RGB color transitions instead. */
 
 static void microros_task(void *arg)
 {
     (void)arg;
     vTaskDelay(pdMS_TO_TICKS(500));
 
-    /* Stage 1: blink = task alive */
-    blink_error(1);
+    RGB_SetState(RGB_WHITE_BLINK);  /* FreeRTOS started, micro-ROS init */
+
+    /* Stage 1: task alive */
+    vTaskDelay(pdMS_TO_TICKS(500));
 
     /* Stage 2: UART transport (skip custom allocator — use malloc/free
      * overrides in microros_allocators.c instead) */
@@ -101,17 +97,19 @@ static void microros_task(void *arg)
             cubemx_transport_close,
             cubemx_transport_write,
             cubemx_transport_read) != RMW_RET_OK) {
-        for (;;) blink_error(3);
+        for (;;) { RGB_SetState(RGB_RED_SOLID); vTaskDelay(pdMS_TO_TICKS(1000)); }
     }
-    blink_error(2);  /* 2 blinks = transport OK */
+    vTaskDelay(pdMS_TO_TICKS(500));  /* transport OK */
 
-    /* Stage 4: Wait for agent — LD2 rapid blink */
+    /* Stage 4: Wait for agent — RGB blue blink */
+    RGB_SetState(RGB_BLUE_BLINK);
     while (rmw_uros_ping_agent(1000, 5) != RCL_RET_OK) {
         HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
         vTaskDelay(pdMS_TO_TICKS(200));
     }
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-    blink_error(4);  /* 4 blinks = agent connected */
+    RGB_SetState(RGB_BLUE_SOLID);  /* agent connected */
+    vTaskDelay(pdMS_TO_TICKS(500));
 
     /* Stage 5: Init micro-ROS node (shared with publisher tasks) */
     rcl_allocator_t allocator = rcl_get_default_allocator();
@@ -120,15 +118,15 @@ static void microros_task(void *arg)
     std_msgs__msg__Int32 msg;
 
     if (rclc_support_init(&g_ros_support, 0, NULL, &allocator) != RCL_RET_OK) {
-        for (;;) blink_error(5);
+        for (;;) { RGB_SetState(RGB_RED_SOLID); vTaskDelay(pdMS_TO_TICKS(1000)); }
     }
     if (rclc_node_init_default(&g_ros_node, "auro_stm32", "auro", &g_ros_support) != RCL_RET_OK) {
-        for (;;) blink_error(6);
+        for (;;) { RGB_SetState(RGB_RED_SOLID); vTaskDelay(pdMS_TO_TICKS(1000)); }
     }
     if (rclc_publisher_init_best_effort(&pub, &g_ros_node,
             ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
             "/auro/heartbeat") != RCL_RET_OK) {
-        for (;;) blink_error(7);
+        for (;;) { RGB_SetState(RGB_RED_SOLID); vTaskDelay(pdMS_TO_TICKS(1000)); }
     }
 
     /* Create ALL publishers here in microros_task — XRCE-DDS client
@@ -138,17 +136,17 @@ static void microros_task(void *arg)
     if (rclc_publisher_init_best_effort(&g_imu_pub, &g_ros_node,
             ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
             "/auro/imu/data") != RCL_RET_OK) {
-        for (;;) blink_error(7);
+        for (;;) { RGB_SetState(RGB_RED_SOLID); vTaskDelay(pdMS_TO_TICKS(1000)); }
     }
     if (rclc_publisher_init_best_effort(&g_odom_pub, &g_ros_node,
             ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
             "/auro/odom") != RCL_RET_OK) {
-        for (;;) blink_error(7);
+        for (;;) { RGB_SetState(RGB_RED_SOLID); vTaskDelay(pdMS_TO_TICKS(1000)); }
     }
     if (rclc_publisher_init_best_effort(&g_diag_pub, &g_ros_node,
             ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
             "/auro/diagnostics") != RCL_RET_OK) {
-        for (;;) blink_error(7);
+        for (;;) { RGB_SetState(RGB_RED_SOLID); vTaskDelay(pdMS_TO_TICKS(1000)); }
     }
 
     /* cmd_vel subscriber — runs in THIS task, shares transport context */
@@ -156,32 +154,67 @@ static void microros_task(void *arg)
     extern void cmd_vel_spin(void);
     cmd_vel_init();
 
-    /* All XRCE-DDS entities created in single thread — safe to start
-     * sensor tasks now.  They use pre-created global publishers. */
-    g_ros_ready = 1U;
+    /* XRCE-DDS client is NOT thread-safe.  ALL session operations
+     * (publish, spin, etc.) must happen in this single task.
+     * Sensor tasks are NOT created — publishing happens here. */
+    g_ros_ready = 1U;  /* Sensor globals (g_imu, g_pose) are still updated by ISR */
 
-    extern void ros_imu_task(void *arg);
-    extern void ros_odom_task(void *arg);
-    extern void ros_diag_task(void *arg);
-    xTaskCreate(ros_imu_task,  "imu",    1536, NULL, 3, NULL);
-    xTaskCreate(ros_odom_task, "odom",   1536, NULL, 2, NULL);
-    xTaskCreate(ros_diag_task, "diag",   1024, NULL, 1, NULL);
+    /* Prepare sensor messages (one-time init) */
+    extern void ros_imu_msg_init(sensor_msgs__msg__Imu *m);
+    extern void ros_odom_msg_init(nav_msgs__msg__Odometry *m);
+    extern void ros_diag_msg_init(std_msgs__msg__String *m);
 
-    blink_error(5);  /* 5 blinks = all publishers ready */
+    sensor_msgs__msg__Imu imu_msg;
+    nav_msgs__msg__Odometry odom_msg;
+    std_msgs__msg__String diag_msg;
+    static char diag_buf[128];
+
+    ros_imu_msg_init(&imu_msg);
+    ros_odom_msg_init(&odom_msg);
+    ros_diag_msg_init(&diag_msg);
+    diag_msg.data.data = diag_buf;
+    diag_msg.data.capacity = sizeof(diag_buf);
+
+    RGB_SetState(RGB_GREEN_BLINK);  /* topics publishing */
+
+    g_stack_hwm = uxTaskGetStackHighWaterMark(NULL);
 
     msg.data = 0;
-    uint32_t hb_next = HAL_GetTick() + 1000U;
+
+    uint32_t imu_next  = HAL_GetTick();
+    uint32_t odom_next = imu_next;
+    uint32_t diag_next = imu_next;
+    uint32_t hb_next   = imu_next;
+
     for (;;) {
+        uint32_t now = HAL_GetTick();
+
         /* Spin cmd_vel executor — processes incoming /cmd_vel */
         cmd_vel_spin();
 
-        /* Heartbeat at 1Hz */
-        if (HAL_GetTick() >= hb_next) {
-            hb_next = HAL_GetTick() + 1000U;
+        /* Publish sensor data (single-threaded — XRCE-DDS not thread-safe) */
+        if (now >= imu_next) {
+            imu_next = now + 20U;   /* 50Hz */
+            extern void ros_imu_fill(sensor_msgs__msg__Imu *m);
+            ros_imu_fill(&imu_msg);
+            (void)!rcl_publish(&g_imu_pub, &imu_msg, NULL);
+        }
+        if (now >= odom_next) {
+            odom_next = now + 20U;  /* 50Hz */
+            extern void ros_odom_fill(nav_msgs__msg__Odometry *m);
+            ros_odom_fill(&odom_msg);
+            (void)!rcl_publish(&g_odom_pub, &odom_msg, NULL);
+        }
+        if (now >= diag_next) {
+            diag_next = now + 1000U;  /* 1Hz */
+            extern void ros_diag_fill(std_msgs__msg__String *m);
+            ros_diag_fill(&diag_msg);
+            (void)!rcl_publish(&g_diag_pub, &diag_msg, NULL);
+        }
+        if (now >= hb_next) {
+            hb_next = now + 1000U;  /* 1Hz */
             msg.data++;
-            rcl_ret_t pub_rc __attribute__((unused)) =
-                rcl_publish(&pub, &msg, NULL);
-            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
+            (void)!rcl_publish(&pub, &msg, NULL);
         }
 
         vTaskDelay(pdMS_TO_TICKS(10));  /* 100Hz spin rate */
@@ -191,11 +224,24 @@ static void microros_task(void *arg)
 
 /* ── App init — called from main() ──────────────────────────── */
 
+/* ── RGB tick task — drives blink timing at 20Hz ────────────── */
+static void rgb_tick_task(void *arg)
+{
+    (void)arg;
+    for (;;) {
+        RGB_Tick();
+        vTaskDelay(pdMS_TO_TICKS(50));
+    }
+}
+
 void app_freertos_init(void)
 {
+    RGB_Init();  /* init RGB LED pins before any task starts */
+
     /* Heartbeat MUST start first — provides visual feedback even if
      * micro-ROS task crashes during init. */
     xTaskCreate(heartbeat_task, "heartbeat", 256, NULL, 1, NULL);
+    xTaskCreate(rgb_tick_task, "rgb", 128, NULL, 1, NULL);
 
 #if defined(MICROROS_ENABLED)
     /* micro-ROS task — 2KB stack to leave heap for micro-ROS allocs. */

@@ -2,9 +2,6 @@
 // with input from nav_msgs:msg/Goals.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "nav_msgs/msg/goals.h"
-
-
 #ifndef NAV_MSGS__MSG__DETAIL__GOALS__TYPE_SUPPORT_H_
 #define NAV_MSGS__MSG__DETAIL__GOALS__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   nav_msgs,
   msg,
   Goals
-)(void);
+)();
 
 #ifdef __cplusplus
 }

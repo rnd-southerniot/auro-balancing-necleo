@@ -2,9 +2,6 @@
 // with input from lifecycle_msgs:msg/TransitionDescription.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "lifecycle_msgs/msg/transition_description.h"
-
-
 #ifndef LIFECYCLE_MSGS__MSG__DETAIL__TRANSITION_DESCRIPTION__STRUCT_H_
 #define LIFECYCLE_MSGS__MSG__DETAIL__TRANSITION_DESCRIPTION__STRUCT_H_
 
@@ -16,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 
 // Constants defined in the message
 

@@ -2,9 +2,6 @@
 // with input from rcl_interfaces:msg/IntegerRange.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "rcl_interfaces/msg/integer_range.h"
-
-
 #ifndef RCL_INTERFACES__MSG__DETAIL__INTEGER_RANGE__TYPE_SUPPORT_H_
 #define RCL_INTERFACES__MSG__DETAIL__INTEGER_RANGE__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   rcl_interfaces,
   msg,
   IntegerRange
-)(void);
+)();
 
 #ifdef __cplusplus
 }

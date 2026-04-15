@@ -2,9 +2,6 @@
 // with input from rcl_interfaces:msg/IntegerRange.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "rcl_interfaces/msg/integer_range.h"
-
-
 #ifndef RCL_INTERFACES__MSG__DETAIL__INTEGER_RANGE__STRUCT_H_
 #define RCL_INTERFACES__MSG__DETAIL__INTEGER_RANGE__STRUCT_H_
 
@@ -16,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 
 // Constants defined in the message
 

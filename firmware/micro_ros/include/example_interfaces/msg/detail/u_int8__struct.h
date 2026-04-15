@@ -2,9 +2,6 @@
 // with input from example_interfaces:msg/UInt8.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "example_interfaces/msg/u_int8.h"
-
-
 #ifndef EXAMPLE_INTERFACES__MSG__DETAIL__U_INT8__STRUCT_H_
 #define EXAMPLE_INTERFACES__MSG__DETAIL__U_INT8__STRUCT_H_
 
@@ -16,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 
 // Constants defined in the message
 

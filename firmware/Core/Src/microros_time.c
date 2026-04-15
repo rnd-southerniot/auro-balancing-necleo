@@ -23,3 +23,12 @@ int clock_gettime(clockid_t clk_id, struct timespec *tp)
     tp->tv_nsec = (long)((ms % 1000U) * 1000000UL);
     return 0;
 }
+
+/* POSIX usleep — required by Humble rclc (rclc_sleep_ms) */
+int usleep(unsigned int usec)
+{
+    uint32_t ms = (usec + 999U) / 1000U;
+    if (ms == 0U) ms = 1U;
+    HAL_Delay(ms);
+    return 0;
+}

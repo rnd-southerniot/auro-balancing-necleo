@@ -21,7 +21,6 @@ extern "C"
 #endif
 
 #include "rcutils/allocator.h"
-#include "rosidl_runtime_c/type_hash.h"
 #include "rmw/types.h"
 #include "rmw/visibility_control.h"
 
@@ -34,10 +33,8 @@ typedef struct RMW_PUBLIC_TYPE rmw_topic_endpoint_info_s
   const char * node_name;
   /// Namespace of the node
   const char * node_namespace;
-  /// The associated topic type's name
+  /// The associated topic type
   const char * topic_type;
-  /// Hashed value for topic type's description
-  rosidl_type_hash_t topic_type_hash;
   /// The endpoint type
   rmw_endpoint_type_t endpoint_type;
   /// The GID of the endpoint
@@ -58,7 +55,7 @@ rmw_get_zero_initialized_topic_endpoint_info(void);
 
 /// Finalize a topic endpoint info data structure.
 /**
- * Deallocates all allocated members of the given data structure,
+ * This function deallocates all allocated members of the given data structure,
  * and then zero initializes it.
  * If a logical error, such as `RMW_RET_INVALID_ARGUMENT`, ensues, this function
  * will return early, leaving the given data structure unchanged.
@@ -97,8 +94,8 @@ rmw_topic_endpoint_info_fini(
 
 /// Set the topic type in the given topic endpoint info data structure.
 /**
- * Allocates memory and copies the value of the `topic_type`
- * argument to set the data structure's `topic_type` member.
+ * This functions allocates memory and copies the value of the `topic_type`
+ * argument to set the data structure `topic_type` member.
  *
  * <hr>
  * Attribute          | Adherence
@@ -138,45 +135,10 @@ rmw_topic_endpoint_info_set_topic_type(
   const char * topic_type,
   rcutils_allocator_t * allocator);
 
-/// Set the topic type hash in the given topic endpoint info data structure.
-/**
- * Assigns the value of the `topic_type_hash` argument to the data structure's
- * `topic_type_hash` member.
- *
- * <hr>
- * Attribute          | Adherence
- * ------------------ | -------------
- * Allocates Memory   | No
- * Thread-Safe        | No
- * Uses Atomics       | No
- * Lock-Free          | Yes
- *
- * \par Thread-safety
- *   Setting a member is a reentrant procedure, but:
- *   - Access to the topic endpoint info data structure is not synchronized.
- *     It is not safe to read or write the `topic_type_hash` member of the given `topic_endpoint`
- *     while setting it.
- *     Concurrent `topic_type_hash` reads are safe, but concurrent reads and writes are not.
- *
- * \param[inout] topic_endpoint_info Data structure to be populated.
- * \param[in] topic_type_hash Topic type hash to be copied.
- * \returns `RMW_RET_OK` if successful, or
- * \returns `RMW_RET_INVALID_ARGUMENT` if `topic_endpoint_info` is NULL, or
- * \returns `RMW_RET_INVALID_ARGUMENT` if `topic_type_hash` is NULL, or
- * \returns `RMW_RET_ERROR` when an unspecified error occurs.
- * \remark This function sets the RMW error state on failure.
- */
-RMW_PUBLIC
-RMW_WARN_UNUSED
-rmw_ret_t
-rmw_topic_endpoint_info_set_topic_type_hash(
-  rmw_topic_endpoint_info_t * topic_endpoint_info,
-  const rosidl_type_hash_t * type_hash);
-
 /// Set the node name in the given topic endpoint info data structure.
 /**
- * Allocates memory and copies the value of the `node_name`
- * argument to set the data structure's `node_name` member.
+ * This functions allocates memory and copies the value of the `node_name`
+ * argument to set the data structure `node_name` member.
  *
  * <hr>
  * Attribute          | Adherence
@@ -218,8 +180,8 @@ rmw_topic_endpoint_info_set_node_name(
 
 /// Set the node namespace in the given topic endpoint info data structure.
 /**
- * Allocates memory and copies the value of the `node_namespace`
- * argument to set the data structure's `node_namespace` member.
+ * This functions allocates memory and copies the value of the `node_namespace`
+ * argument to set the data structure `node_namespace` member.
  *
  * <hr>
  * Attribute          | Adherence
@@ -261,7 +223,7 @@ rmw_topic_endpoint_info_set_node_namespace(
 
 /// Set the endpoint type in the given topic endpoint info data structure.
 /**
- * Assigns the value of the `type` argument to the data structure's
+ * This functions assigns the value of the `type` argument to the data structure
  * `endpoint_type` member.
  *
  * <hr>
@@ -294,7 +256,7 @@ rmw_topic_endpoint_info_set_endpoint_type(
 
 /// Set the endpoint gid in the given topic endpoint info data structure.
 /**
- * Copies the value of the `gid` argument to the data structure's
+ * This functions copies the value of the `gid` argument to the data structure
  * `endpoint_gid` member.
  *
  * <hr>
@@ -331,7 +293,7 @@ rmw_topic_endpoint_info_set_gid(
 
 /// Set the endpoint QoS profile in the given topic endpoint info data structure.
 /**
- * Assigns the value of the `qos_profile` argument to the data structure's
+ * This functions assigns the value of the `qos_profile` argument to the data structure
  * `qos_profile` member.
  *
  * <hr>

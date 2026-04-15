@@ -17,8 +17,33 @@ void NMI_Handler(void)
 {
 }
 
+/* Fault diagnostics — read via GDB after crash */
+volatile uint32_t g_fault_pc   = 0xDEADBEEF;
+volatile uint32_t g_fault_lr   = 0xDEADBEEF;
+volatile uint32_t g_fault_cfsr = 0xDEADBEEF;
+volatile uint32_t g_fault_bfar = 0xDEADBEEF;
+volatile uint32_t g_fault_sp   = 0xDEADBEEF;
+
 void HardFault_Handler(void)
 {
+    /* Extract stacked PC/LR from exception frame */
+    __asm volatile(
+        "tst lr, #4          \n"
+        "ite eq              \n"
+        "mrseq r0, msp       \n"
+        "mrsne r0, psp       \n"
+        "ldr r1, [r0, #24]   \n"  /* stacked PC */
+        "ldr r2, [r0, #20]   \n"  /* stacked LR */
+        "ldr r3, =g_fault_pc \n"
+        "str r1, [r3]        \n"
+        "ldr r3, =g_fault_lr \n"
+        "str r2, [r3]        \n"
+        "ldr r3, =g_fault_sp \n"
+        "str r0, [r3]        \n"
+    );
+    g_fault_cfsr = *(volatile uint32_t *)0xE000ED28U;  /* CFSR */
+    g_fault_bfar = *(volatile uint32_t *)0xE000ED38U;  /* BFAR */
+
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
     while (1) {
     }

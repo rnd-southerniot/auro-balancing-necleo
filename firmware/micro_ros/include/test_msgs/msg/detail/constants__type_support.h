@@ -2,9 +2,6 @@
 // with input from test_msgs:msg/Constants.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "test_msgs/msg/constants.h"
-
-
 #ifndef TEST_MSGS__MSG__DETAIL__CONSTANTS__TYPE_SUPPORT_H_
 #define TEST_MSGS__MSG__DETAIL__CONSTANTS__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   test_msgs,
   msg,
   Constants
-)(void);
+)();
 
 #ifdef __cplusplus
 }

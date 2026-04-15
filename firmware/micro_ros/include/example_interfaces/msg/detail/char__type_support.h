@@ -2,9 +2,6 @@
 // with input from example_interfaces:msg/Char.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "example_interfaces/msg/char.h"
-
-
 #ifndef EXAMPLE_INTERFACES__MSG__DETAIL__CHAR__TYPE_SUPPORT_H_
 #define EXAMPLE_INTERFACES__MSG__DETAIL__CHAR__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   example_interfaces,
   msg,
   Char
-)(void);
+)();
 
 #ifdef __cplusplus
 }

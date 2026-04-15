@@ -68,7 +68,7 @@ size_t cubemx_transport_write(struct uxrCustomTransport *transport,
 {
     (void)transport;
     HAL_StatusTypeDef status =
-        HAL_UART_Transmit(&huart6, (uint8_t *)buf, (uint16_t)len, 100);
+        HAL_UART_Transmit(&huart6, (uint8_t *)buf, (uint16_t)len, 10);
     *errcode = (status == HAL_OK) ? 0U : 1U;
     return (status == HAL_OK) ? len : 0;
 }
@@ -79,6 +79,13 @@ size_t cubemx_transport_read(struct uxrCustomTransport *transport,
 {
     (void)transport;
     size_t got = 0;
+
+    /* Cap timeout: XRCE-DDS may pass large or negative values which
+     * cause the busy-wait loop to hang the FreeRTOS task.
+     * Keep it short (max 5ms) to avoid starving motor control. */
+    if (timeout_ms <= 0 || timeout_ms > 5) {
+        timeout_ms = 5;
+    }
     uint32_t deadline = HAL_GetTick() + (uint32_t)timeout_ms;
 
     while (got < len) {

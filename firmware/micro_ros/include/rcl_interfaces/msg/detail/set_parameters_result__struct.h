@@ -2,9 +2,6 @@
 // with input from rcl_interfaces:msg/SetParametersResult.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "rcl_interfaces/msg/set_parameters_result.h"
-
-
 #ifndef RCL_INTERFACES__MSG__DETAIL__SET_PARAMETERS_RESULT__STRUCT_H_
 #define RCL_INTERFACES__MSG__DETAIL__SET_PARAMETERS_RESULT__STRUCT_H_
 
@@ -16,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 
 // Constants defined in the message
 
@@ -31,8 +29,8 @@ extern "C"
 typedef struct rcl_interfaces__msg__SetParametersResult
 {
   bool successful;
-  /// Reason why the setting was a failure. On success, the contents of this field
-  /// are undefined.  This should only be used for logging and user interfaces.
+  /// Reason why the setting was either successful or a failure. This should only be
+  /// used for logging and user interfaces.
   rosidl_runtime_c__String reason;
 } rcl_interfaces__msg__SetParametersResult;
 

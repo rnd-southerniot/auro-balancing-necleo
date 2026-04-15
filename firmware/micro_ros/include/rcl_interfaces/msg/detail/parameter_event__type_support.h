@@ -2,9 +2,6 @@
 // with input from rcl_interfaces:msg/ParameterEvent.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "rcl_interfaces/msg/parameter_event.h"
-
-
 #ifndef RCL_INTERFACES__MSG__DETAIL__PARAMETER_EVENT__TYPE_SUPPORT_H_
 #define RCL_INTERFACES__MSG__DETAIL__PARAMETER_EVENT__TYPE_SUPPORT_H_
 
@@ -27,7 +24,7 @@ ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
   rcl_interfaces,
   msg,
   ParameterEvent
-)(void);
+)();
 
 #ifdef __cplusplus
 }

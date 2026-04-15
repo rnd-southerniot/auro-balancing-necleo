@@ -2,9 +2,6 @@
 // with input from sensor_msgs:msg/Image.idl
 // generated code does not contain a copyright notice
 
-// IWYU pragma: private, include "sensor_msgs/msg/image.h"
-
-
 #ifndef SENSOR_MSGS__MSG__DETAIL__IMAGE__STRUCT_H_
 #define SENSOR_MSGS__MSG__DETAIL__IMAGE__STRUCT_H_
 
@@ -16,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 
 // Constants defined in the message
 
@@ -48,7 +46,7 @@ typedef struct sensor_msgs__msg__Image
   uint32_t height;
   /// image width, that is, number of columns
   uint32_t width;
-  /// The legal values for encoding are in file include/sensor_msgs/image_encodings.hpp
+  /// The legal values for encoding are in file src/image_encodings.cpp
   /// If you want to standardize a new string format, join
   /// ros-users@lists.ros.org and send an email proposing a new encoding.
   /// Encoding of pixels -- channel meaning, ordering, size
