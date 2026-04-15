@@ -136,6 +136,40 @@ extern "C" {
 /* PC11 = GPIO_OUT = EN_B            CN7-2   */
 /* PC4  = ADC1_IN14 = CT_B (current) CN10-34 */
 
+// ─── Balance Controller ──────────────────────────────────────────────────────
+// Angle PID: pitch error → g_diff_linear (±1.0 normalized)
+// ISR converts: g_diff_linear * DIFF_MAX_RPM (150) = motor RPM
+//
+// g_imu.pitch_deg: complementary filter output, degrees, 200Hz
+// Balance_Tick(): called at 50Hz from microros_task timestamp gate
+//
+// Setpoint -28.4° = hardware-measured upright position (HW-LIVE-02)
+// Fall ±35° = cut motors, enter FAULT, require explicit re-enable
+
+// ── Core ─────────────────────────────────────────────────────────────────────
+#define BALANCE_SETPOINT_DEG        (-28.4f)   // HW-LIVE-02: do not change
+#define BALANCE_FALL_THRESHOLD_DEG  (35.0f)    // deg from setpoint
+#define BALANCE_LOOP_MS             (20U)      // 50Hz
+
+// ── Angle PID gains ───────────────────────────────────────────────────────────
+// Output: normalized [-1.0, +1.0] → * 150 RPM in ISR
+// Kp=0.02: 1 deg error → 0.02 → 3 RPM (conservative, safe to observe)
+#define BALANCE_ANGLE_KP            (0.02f)
+#define BALANCE_ANGLE_KI            (0.0f)
+#define BALANCE_ANGLE_KD            (0.002f)
+#define BALANCE_ANGLE_IMAX          (0.3f)     // anti-windup clamp
+#define BALANCE_ANGLE_OUT_MAX       (0.8f)     // max |g_diff_linear|
+
+// ── Lean-to-drive ─────────────────────────────────────────────────────────────
+// cmd_vel linear.x shifts setpoint; angular.z adds RPM differential
+#define BALANCE_LEAN_SCALE          (2.0f)     // deg per m/s cmd_vel
+#define BALANCE_LEAN_MAX_DEG        (5.0f)     // max setpoint shift
+#define BALANCE_TURN_SCALE          (0.3f)     // normalized per rad/s
+#define BALANCE_TURN_MAX            (0.5f)     // max |g_diff_angular|
+
+// ── cmd_vel watchdog ──────────────────────────────────────────────────────────
+#define BALANCE_CMDVEL_TIMEOUT_MS   (500U)
+
 #ifdef __cplusplus
 }
 #endif

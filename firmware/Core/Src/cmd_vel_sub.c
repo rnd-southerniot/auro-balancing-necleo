@@ -26,6 +26,7 @@
 #include "ros_topics.h"
 #include "safety.h"
 #include "rgb_led.h"
+#include "balance.h"
 
 /* ── Extern globals from main.c ──────────────────────────────── */
 extern volatile float       g_diff_linear;
@@ -61,14 +62,24 @@ static void cmd_vel_cb(const void *msg)
     const geometry_msgs__msg__Twist *t =
         (const geometry_msgs__msg__Twist *)msg;
 
-    g_diff_linear  = clampf((float)t->linear.x  / MAX_LINEAR_VEL,  -1.0f, 1.0f);
-    g_diff_angular = clampf((float)t->angular.z / MAX_ANGULAR_VEL, -1.0f, 1.0f);
+    float lin = clampf((float)t->linear.x  / MAX_LINEAR_VEL,  -1.0f, 1.0f);
+    float ang = clampf((float)t->angular.z / MAX_ANGULAR_VEL, -1.0f, 1.0f);
+
+    /* Always feed raw cmd_vel to balance (shifts setpoint when ON) */
+    Balance_SetCmdVel((float)t->linear.x, (float)t->angular.z);
+
+    if (!Balance_IsOn()) {
+        /* Direct drive mode — cmd_vel owns g_diff */
+        g_diff_linear  = lin;
+        g_diff_angular = ang;
+    }
+    /* When balance is ON, Balance_Tick() owns g_diff_linear/angular */
 
     Safety_ClearFaults();
     g_mode       = CTRL_DIFF;
     g_mode_b     = CTRL_DIFF;
     g_last_cmd_ms = HAL_GetTick();
-    last_cmd_tick = HAL_GetTick();   /* MUST update — prevents watchdog zero */
+    last_cmd_tick = HAL_GetTick();
 
     RGB_SetState(RGB_GREEN_SOLID);
 }
