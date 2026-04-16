@@ -156,7 +156,7 @@ extern "C" {
 // Kp=0.02: 1 deg error → 0.02 → 3 RPM (conservative, safe to observe)
 #define BALANCE_ANGLE_KP            (0.12f)
 #define BALANCE_ANGLE_KI            (0.0f)
-#define BALANCE_ANGLE_KD            (0.01f)
+#define BALANCE_ANGLE_KD            (0.03f)    // 3x previous — dampens oscillation
 #define BALANCE_ANGLE_IMAX          (0.3f)     // anti-windup clamp
 #define BALANCE_ANGLE_OUT_MAX       (0.8f)     // max |g_diff_linear|
 
