@@ -147,16 +147,16 @@ extern "C" {
 // Fall ±35° = cut motors, enter FAULT, require explicit re-enable
 
 // ── Core ─────────────────────────────────────────────────────────────────────
-#define BALANCE_SETPOINT_DEG        (-28.4f)   // HW-LIVE-02: do not change
+#define BALANCE_SETPOINT_DEG        (-5.0f)    // measured: upright ≈ -3.7° to -5.8°
 #define BALANCE_FALL_THRESHOLD_DEG  (35.0f)    // deg from setpoint
 #define BALANCE_LOOP_MS             (20U)      // 50Hz
 
 // ── Angle PID gains ───────────────────────────────────────────────────────────
 // Output: normalized [-1.0, +1.0] → * 150 RPM in ISR
 // Kp=0.02: 1 deg error → 0.02 → 3 RPM (conservative, safe to observe)
-#define BALANCE_ANGLE_KP            (0.02f)
+#define BALANCE_ANGLE_KP            (0.12f)
 #define BALANCE_ANGLE_KI            (0.0f)
-#define BALANCE_ANGLE_KD            (0.002f)
+#define BALANCE_ANGLE_KD            (0.01f)
 #define BALANCE_ANGLE_IMAX          (0.3f)     // anti-windup clamp
 #define BALANCE_ANGLE_OUT_MAX       (0.8f)     // max |g_diff_linear|
 

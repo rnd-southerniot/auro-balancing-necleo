@@ -180,6 +180,18 @@ static void microros_task(void *arg)
 
     RGB_SetState(RGB_GREEN_BLINK);  /* topics publishing */
 
+    /* Enable balance controller — fall detection (±35°) active as safety */
+    Balance_Enable();
+    /* Set CTRL_DIFF so ISR drives motors from g_diff_linear */
+    {
+        extern volatile ControlMode_t g_mode;
+        extern volatile ControlMode_t g_mode_b;
+        extern volatile uint32_t      g_last_cmd_ms;
+        g_mode   = CTRL_DIFF;
+        g_mode_b = CTRL_DIFF;
+        g_last_cmd_ms = HAL_GetTick();
+    }
+
     g_stack_hwm = uxTaskGetStackHighWaterMark(NULL);
 
     msg.data = 0;

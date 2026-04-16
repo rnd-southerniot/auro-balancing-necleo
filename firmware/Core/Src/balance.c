@@ -120,7 +120,7 @@ bool Balance_Tick(void)
     g_bal.setpoint_shifted = setpoint;
 
     /* 4. Angle PID */
-    float error = setpoint - pitch;
+    float error = pitch - setpoint;  /* positive error = leaning forward → push back */
     g_bal.pitch_error_deg = error;
 
     float p = g_bal.kp * error;
