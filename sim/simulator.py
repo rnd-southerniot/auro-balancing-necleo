@@ -21,7 +21,9 @@ def compute_K_plant():
     """Effective torque per unit g_diff_linear (N*m)"""
     tau_stall_per_motor = P.K_t * P.V_supply / P.R_a * P.gear_ratio
     tau_stall_total = 2 * tau_stall_per_motor
-    efficiency = 0.35
+    # Effective efficiency includes gearbox losses, PID dynamics, backlash
+    # Calibrate so simulated Ku ≈ hardware Ku = 0.12
+    efficiency = 0.15
     return tau_stall_total * efficiency
 
 K_PLANT = compute_K_plant()
@@ -42,7 +44,7 @@ def simulate_balance(Kp, Ki, Kd,
 
     dt_phys = 0.001       # 1kHz physics (matches ISR)
     dt_ctrl = P.control_dt  # 20ms = 50Hz
-    tau_motor = 0.05      # motor lag (s)
+    tau_motor = 0.025     # motor+PID lag (s) — faster than open-loop
 
     # PID state
     integral = 0.0
