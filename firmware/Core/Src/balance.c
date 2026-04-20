@@ -120,7 +120,7 @@ bool Balance_Tick(void)
     g_bal.setpoint_shifted = setpoint;
 
     /* 4. Angle PID */
-    float error = pitch - setpoint;  /* positive error = leaning forward → push back */
+    float error = setpoint - pitch;  /* forward tilt (pitch more negative) → positive output → forward motor */
     g_bal.pitch_error_deg = error;
 
     float p = g_bal.kp * error;
