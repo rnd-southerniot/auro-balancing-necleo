@@ -19,3 +19,20 @@ __pycache__/
 
 # Secrets
 .env
+
+# Claude Code local settings
+.claude/
+
+# PlatformIO build cache
+esp32_bridge/.pio/
+
+# Large CAD files (keep locally, too large for git)
+sim/robot.step
+sim/robot.stl
+sim/*.f3d
+
+# Obsolete library backups
+firmware/micro_ros/*.jazzy_backup
+firmware/micro_ros/*.jazzy_current
+firmware/micro_ros/*.jazzy_final
+firmware/micro_ros/include*_jazzy*
