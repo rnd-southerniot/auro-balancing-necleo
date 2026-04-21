@@ -6,8 +6,8 @@ Reads /auro/imu/data quaternion via SSH → VM agent, converts to pitch degrees.
 Detects oscillation, measures Tu, applies Z-N for firmware-ready gains.
 
 Usage:
-    python3 scripts/pitch_monitor.py
-    python3 scripts/pitch_monitor.py --host arif@10.10.9.249
+    AURO_VM_HOST=user@vm.local python3 scripts/pitch_monitor.py
+    python3 scripts/pitch_monitor.py --host user@vm.local
     python3 scripts/pitch_monitor.py --log session.csv
 
 Keyboard (while running):
@@ -29,7 +29,7 @@ from collections import deque
 from datetime import datetime
 
 # ── Constants ──────────────────────────────────────────────────────────────
-VM_HOST   = 'arif@10.10.9.249'
+VM_HOST   = os.environ.get('AURO_VM_HOST', 'user@vm.local')
 TOPIC     = '/auro/imu/data'
 SP_DEG    = -5.0
 Ku        = 0.12
