@@ -17,8 +17,10 @@ __pycache__/
 # macOS
 .DS_Store
 
-# Secrets
+# Secrets — NEVER commit
 .env
+esp32_bridge/include/secrets.h
+!esp32_bridge/include/secrets.h.example
 
 # Claude Code local settings
 .claude/
