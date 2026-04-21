@@ -8,9 +8,12 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
-const char* WIFI_SSID  = "Auro_IoT";
-const char* WIFI_PASS  = "***REDACTED***";
-const char* AGENT_IP   = "10.10.9.249";
+/* Legacy Arduino-IDE sketch. Canonical build is PlatformIO → src/main.cpp.
+ * Fill values locally before flashing; do not commit real credentials.
+ * See esp32_bridge/include/secrets.h.example. */
+const char* WIFI_SSID  = "your-ssid-here";
+const char* WIFI_PASS  = "your-password-here";
+const char* AGENT_IP   = "192.168.x.x";
 const int   AGENT_PORT = 8888;
 const int   LOCAL_PORT = 8888;
 

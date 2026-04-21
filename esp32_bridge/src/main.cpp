@@ -7,12 +7,7 @@
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
-
-const char* WIFI_SSID  = "Auro_IoT";
-const char* WIFI_PASS  = "***REDACTED***";
-const char* AGENT_IP   = "10.10.9.249";
-const int   AGENT_PORT = 8888;
-const int   LOCAL_PORT = 8889;
+#include "secrets.h"
 
 const int   UART_RX    = 17;
 const int   UART_TX    = 18;
