@@ -125,6 +125,8 @@ Per phase: branch `phase/v1-<n>-<slug>`, Conventional Commits with the phase id 
             Upstream verified via gateway: 22/22 healthy, 29 docs. Branch phase/v1-0-pinmap committed
             but NOT pushed, and the final mirror resync NOT run: both blocked by the permission check.
             NEXT: Gate 0 answers from Arif -> finalize pin map -> Phase 1 (docs/NEXT_SESSION.md).
+2026-09-27  Follow-up: phase/v1-0-pinmap pushed to origin (gitleaks clean on all 8 commits); mirror
+            resynced, gateway serves 32 docs incl. the port-8022 note. No PR opened.
 ```
 
 ## Guardrails

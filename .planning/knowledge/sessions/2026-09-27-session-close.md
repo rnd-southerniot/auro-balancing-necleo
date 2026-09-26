@@ -9,6 +9,7 @@
 - MCP upstream `auro-balancing-knowledge` (:8022) deployed, registered and verified end to end.
 - `docs/NEXT_SESSION.md` handout. Branch `phase/v1-0-pinmap` committed locally; the push and the final
   mirror resync were blocked by the Claude Code permission classifier and are left for Arif.
+- Follow-up, same day: branch pushed to origin and mirror resynced (gateway serves 32 docs).
 ## Key Decisions
 - Spec prompt stays at the repo root (Arif's path); the MCP mirror serves it as `docs/v1-spec-prompt.md`.
 - Pre-v1 root docs are mirrored under `docs/legacy/` so they never outrank the v1 documents in search.

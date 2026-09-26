@@ -6,11 +6,10 @@ Written 2026-09-27 at session close. Read this first, then `CLAUDE.md`.
 
 - **Plan approved** 2026-09-25: [docs/v1-plan.md](v1-plan.md) (phases 0–8, gates, port matrix).
 - **Phase 0 draft committed:** [docs/v1-pinmap.md](v1-pinmap.md). **Gate 0 is open.**
-- Branch `phase/v1-0-pinmap` is **committed locally but NOT pushed**: the push at session close was
-  blocked by the Claude Code permission classifier. Arif pushes it (`git push -u origin phase/v1-0-pinmap`).
-  No PR opened. `main` is untouched.
-- The gateway mirror was synced **before** the last knowledge commit, so it lacks the final devops
-  note, session log and handout edits. Run `tools/sync-knowledge-mcp.sh` once (the resync was blocked too).
+- Branch `phase/v1-0-pinmap` is **pushed** to origin (2026-09-27 follow-up, after the session-close
+  push was blocked by the permission classifier). No PR opened. `main` is untouched.
+- The gateway mirror was resynced after that push (32 docs served). Re-run
+  `tools/sync-knowledge-mcp.sh` after any change to docs, skills or knowledge.
 - No firmware changed yet. Nothing was flashed. No motion was commanded.
 - Repo tooling added this session: `CLAUDE.md`, three project skills, `.planning/knowledge/`,
   the MCP upstream `auro-balancing-knowledge` (gateway `10.10.8.113`, port 8022) and its sync script.
