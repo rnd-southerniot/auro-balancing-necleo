@@ -7,7 +7,8 @@
   `.gitignore` now keeps `.claude/skills/` while ignoring the rest of `.claude/`.
 - Knowledge: `devops/build-flash.md`, `devops/mcp-gateway-upstream.md`, decisions status update.
 - MCP upstream `auro-balancing-knowledge` (:8022) deployed, registered and verified end to end.
-- `docs/NEXT_SESSION.md` handout; branch `phase/v1-0-pinmap` pushed.
+- `docs/NEXT_SESSION.md` handout. Branch `phase/v1-0-pinmap` committed locally; the push and the final
+  mirror resync were blocked by the Claude Code permission classifier and are left for Arif.
 ## Key Decisions
 - Spec prompt stays at the repo root (Arif's path); the MCP mirror serves it as `docs/v1-spec-prompt.md`.
 - Pre-v1 root docs are mirrored under `docs/legacy/` so they never outrank the v1 documents in search.

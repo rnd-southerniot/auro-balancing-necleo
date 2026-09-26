@@ -6,7 +6,11 @@ Written 2026-09-27 at session close. Read this first, then `CLAUDE.md`.
 
 - **Plan approved** 2026-09-25: [docs/v1-plan.md](v1-plan.md) (phases 0–8, gates, port matrix).
 - **Phase 0 draft committed:** [docs/v1-pinmap.md](v1-pinmap.md). **Gate 0 is open.**
-- Branch `phase/v1-0-pinmap`, pushed to `origin`. No PR opened. `main` is untouched.
+- Branch `phase/v1-0-pinmap` is **committed locally but NOT pushed**: the push at session close was
+  blocked by the Claude Code permission classifier. Arif pushes it (`git push -u origin phase/v1-0-pinmap`).
+  No PR opened. `main` is untouched.
+- The gateway mirror was synced **before** the last knowledge commit, so it lacks the final devops
+  note, session log and handout edits. Run `tools/sync-knowledge-mcp.sh` once (the resync was blocked too).
 - No firmware changed yet. Nothing was flashed. No motion was commanded.
 - Repo tooling added this session: `CLAUDE.md`, three project skills, `.planning/knowledge/`,
   the MCP upstream `auro-balancing-knowledge` (gateway `10.10.8.113`, port 8022) and its sync script.
@@ -26,7 +30,7 @@ INA240 is answered (**not fitted**; 5 mΩ, REF1 → VS, REF2 → GND when fitted
 
 ## First steps next session
 
-1. `git switch phase/v1-0-pinmap && git pull` and read this file.
+1. Confirm the branch is on `origin` (`git status -sb`); if not, push it. Run `tools/sync-knowledge-mcp.sh`.
 2. Fill the **As-wired** column of `docs/v1-pinmap.md` §2 and §9 from Arif's answers; flip
    PROPOSED → PROVEN only for what he confirms. If anything he wired conflicts with SB62/SB63,
    PB3, the RGB pins or TIM10/11, raise it before accepting.

@@ -122,7 +122,8 @@ Per phase: branch `phase/v1-<n>-<slug>`, Conventional Commits with the phase id 
             quoted: st.com unreachable from this Mac (HTTP/2 stream error, then timeouts) -> UNKNOWN.
 2026-09-27  Session close: CLAUDE.md, 3 project skills, knowledge, MCP upstream auro-balancing-knowledge
             (:8022), docs/NEXT_SESSION.md. Build re-verified (micro-ROS default, 186 560 B text).
-            Upstream verified via gateway: 22/22 healthy, 29 docs. Branch phase/v1-0-pinmap pushed.
+            Upstream verified via gateway: 22/22 healthy, 29 docs. Branch phase/v1-0-pinmap committed
+            but NOT pushed, and the final mirror resync NOT run: both blocked by the permission check.
             NEXT: Gate 0 answers from Arif -> finalize pin map -> Phase 1 (docs/NEXT_SESSION.md).
 ```
 
