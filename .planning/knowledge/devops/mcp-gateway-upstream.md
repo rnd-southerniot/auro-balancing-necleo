@@ -29,3 +29,7 @@ not verified which value the process holds). Relaunching from a fresh shell shou
 Run `tools/sync-knowledge-mcp.sh` after changing `CLAUDE.md`, `docs/`, `.claude/skills/` or
 `.planning/knowledge/`. It aborts if gitleaks flags the staged mirror, which anyone with gateway
 access can read.
+## Port 8022 was also planned elsewhere
+A parallel session (fw-segway-bldc-controller, 2026-09-27) planned `segway-bldc-knowledge` on port
+8022 but did not deploy it (its rsync stalled). This upstream now holds 8022. The clash is recorded
+in the global profile (`~/.claude/CLAUDE.md` §15); that repo's deploy must pick another port.
