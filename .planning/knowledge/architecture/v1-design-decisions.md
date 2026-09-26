@@ -2,6 +2,9 @@
 **Category:** architecture
 **Tags:** v1, tb6612, ina240, tim1, iwdg, imu, framing, freertos
 **Date:** 2026-09-25
+## Status (2026-09-27)
+Plan approved and copied into the repo as `docs/v1-plan.md` (source of record from now on). Phase 0 draft pin map committed; Gate 0 open. Nothing implemented yet.
+
 ## Context
 Arif's v1 prompt (`balancing-robot-v1-cc-prompt.md`) described an "existing state" that partly belonged to the sibling repo `auro-balancer`. Decisions below were locked with Arif in plan review.
 ## Detail
@@ -23,6 +26,6 @@ Arif's v1 prompt (`balancing-robot-v1-cc-prompt.md`) described an "existing stat
 | B10 gate | Angle-tick ISR worst case < 500 µs; angle/non-angle ticks reported separately | |
 | B1 | Use measured CPR; pass = L/R within 1 % | |
 ## Usage
-Plan: `~/.claude/plans/run-users-arif-mac-developer-projects-ro-witty-lovelace.md`. Pin map: `docs/v1-pinmap.md`.
+Plan: `docs/v1-plan.md` (the `~/.claude/plans/` copy is no longer maintained). Pin map: `docs/v1-pinmap.md`.
 ## Related
 `.planning/knowledge/gotchas/f401re-v1-gotchas.md`
