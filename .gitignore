@@ -22,8 +22,9 @@ __pycache__/
 esp32_bridge/include/secrets.h
 !esp32_bridge/include/secrets.h.example
 
-# Claude Code local settings
-.claude/
+# Claude Code local settings (project skills ARE version-controlled)
+.claude/*
+!.claude/skills/
 
 # PlatformIO build cache
 esp32_bridge/.pio/
